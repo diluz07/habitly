@@ -25,6 +25,8 @@ const User = mongoose.model('User', new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   verificationCode: { type: String },
   verificationExpires: { type: Date },
+  emailReminders: { type: Boolean, default: true },
+  lastReminderSentDate: { type: String },
 }, { timestamps: true }));
 
 async function sendVerificationEmail(email, name, code) {
@@ -87,6 +89,153 @@ async function sendVerificationEmail(email, name, code) {
   } catch (err) {
     console.error('Resend exception:', err.message);
     return { ok: false, error: err.message };
+  }
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, m => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[m]);
+}
+
+async function sendHabitReminderEmail(email, name, habits = []) {
+  if (!resend) {
+    console.log('\n======================================================');
+    console.log(`[Resend Sim] Habit reminder for ${email}`);
+    console.log('======================================================\n');
+    return { ok: true, simulated: true, pendingCount: 0, completedCount: 0 };
+  }
+
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  const dayOfWeek = now.getDay();
+
+  // Find habits scheduled for today
+  const scheduledToday = habits.filter(h => {
+    if (!h || !h.name) return false;
+    const dows = Array.isArray(h.dow) && h.dow.length ? h.dow : [0, 1, 2, 3, 4, 5, 6];
+    return dows.includes(dayOfWeek);
+  });
+
+  const pending = scheduledToday.filter(h => !h.days || !h.days[todayStr]);
+  const completed = scheduledToday.filter(h => h.days && h.days[todayStr]);
+
+  const greeting = name ? `Hi ${name},` : 'Hello,';
+  const from = EMAIL_FROM || 'Habitly <verify@dilshad.runs-on.dev>';
+
+  let habitsListHtml = '';
+  if (pending.length === 0 && completed.length > 0) {
+    habitsListHtml = `
+      <div style="background:#eaf5ec;border:1px solid #c3e6cb;border-radius:14px;padding:20px;text-align:center;margin:18px 0;">
+        <span style="font-size:28px">🎉</span>
+        <h3 style="margin:8px 0 4px;color:#276738;font-size:17px;font-weight:600">All habits completed today!</h3>
+        <p style="margin:0;font-size:13.5px;color:#2f7a43">You've finished all ${completed.length} habits scheduled for today. Incredible discipline!</p>
+      </div>
+    `;
+  } else if (scheduledToday.length === 0) {
+    habitsListHtml = `
+      <div style="background:#f4eee2;border:1px solid #e2d7c3;border-radius:14px;padding:18px;text-align:center;margin:18px 0;">
+        <span style="font-size:24px">☕</span>
+        <p style="font-size:14px;color:#6b5f54;margin:6px 0 0;line-height:1.4">
+          No habits are scheduled for today. Rest up or add a new tiny habit in Habitly!
+        </p>
+      </div>
+    `;
+  } else {
+    habitsListHtml = `
+      <div style="margin:18px 0 10px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#c8553d;margin-bottom:10px">
+          ⏳ Pending Habits (${pending.length})
+        </div>
+        ${pending.map(h => `
+          <div style="background:#fff;border:1px solid #e8dfcd;border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <span style="font-size:15px;font-weight:600;color:#2a211d">${escapeHtml(h.name)}</span>
+              ${h.time ? `<span style="font-size:12px;color:#8a7f74;margin-left:8px">⏰ ${h.time}</span>` : ''}
+            </div>
+            <span style="background:#fdf2ef;color:#c8553d;font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;border:1px solid #fae3dc">Pending</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    if (completed.length > 0) {
+      habitsListHtml += `
+        <div style="margin-top:20px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#3d8a57;margin-bottom:10px">
+            ✓ Done Today (${completed.length})
+          </div>
+          ${completed.map(h => `
+            <div style="background:#fbfbf9;border:1px solid #ede8df;border-radius:12px;padding:10px 16px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;opacity:0.85">
+              <span style="font-size:14px;color:#554c43;text-decoration:line-through">${escapeHtml(h.name)}</span>
+              <span style="color:#3d8a57;font-weight:bold;font-size:13px">✓ Done</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+  }
+
+  const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#f6efe2;margin:0;padding:32px 16px;color:#2a211d">
+      <div style="max-width:500px;margin:0 auto;background:#fdfaf3;border:1px solid #e8dfcd;border-radius:22px;padding:32px 24px;box-shadow:0 8px 30px rgba(42,33,29,0.06)">
+        <div style="font-size:38px;text-align:center;margin-bottom:12px">🌱</div>
+        <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:600;text-align:center;margin:0 0 6px;color:#2a211d">Habitly Daily Check-in</h1>
+        <p style="font-size:14.5px;color:#7a6f64;text-align:center;margin:0 0 20px;line-height:1.5">
+          ${greeting} here's your quick reminder to keep your daily streaks alive.
+        </p>
+
+        ${habitsListHtml}
+
+        <div style="text-align:center;margin:28px 0 16px">
+          <a href="https://diluz07-habitly.vercel.app" style="background:#c8553d;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 28px;border-radius:999px;display:inline-block;box-shadow:0 4px 14px rgba(200,85,61,0.25)">
+            Open Habitly &amp; Check In →
+          </a>
+        </div>
+
+        <p style="font-size:12px;color:#9b8e82;text-align:center;margin:24px 0 0;line-height:1.4">
+          You received this because email reminders are enabled in your Habitly Profile.<br>
+          Small daily actions build lifelong identity. You've got this!
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const subject = pending.length > 0
+    ? `🌱 ${pending.length} habit${pending.length === 1 ? '' : 's'} waiting for you today`
+    : `🌱 Great job! Your habits for today are all checked off`;
+
+  try {
+    let result = await resend.emails.send({
+      from,
+      to: email,
+      subject,
+      html: emailHtml,
+    });
+
+    if (result.error && result.error.message && result.error.message.includes('not verified') && from !== 'Habitly <onboarding@resend.dev>') {
+      result = await resend.emails.send({
+        from: 'Habitly <onboarding@resend.dev>',
+        to: email,
+        subject,
+        html: emailHtml,
+      });
+    }
+
+    if (result.error) {
+      console.error('Resend reminder error:', result.error);
+      return { ok: false, error: result.error.message, pendingCount: pending.length, completedCount: completed.length };
+    }
+    return { ok: true, data: result.data, pendingCount: pending.length, completedCount: completed.length };
+  } catch (err) {
+    console.error('Resend reminder exception:', err.message);
+    return { ok: false, error: err.message, pendingCount: pending.length, completedCount: completed.length };
   }
 }
 
@@ -331,7 +480,12 @@ app.post('/api/auth/logout', (req, res) => { res.clearCookie('token'); res.json(
 app.get('/api/me', auth, async (req, res) => {
   const user = await User.findById(req.uid);
   if (!user) return res.status(401).json({ error: 'Not signed in' });
-  res.json({ email: user.email, name: user.name || '', age: user.age });
+  res.json({
+    email: user.email,
+    name: user.name || '',
+    age: user.age,
+    emailReminders: user.emailReminders !== false
+  });
 });
 
 /* ---------- User data ---------- */
@@ -345,6 +499,65 @@ app.put('/api/state', auth, async (req, res) => {
     return res.status(400).json({ error: 'Invalid data' });
   await State.findOneAndUpdate({ user: req.uid }, { habits, mood }, { upsert: true });
   res.json({ ok: true });
+});
+
+/* ---------- Habit Reminders via Email ---------- */
+app.post('/api/reminders/send-now', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.uid);
+    if (!user) return res.status(401).json({ error: 'User not found' });
+    const state = await State.findOne({ user: req.uid });
+    const habits = state ? state.habits : [];
+    const result = await sendHabitReminderEmail(user.email, user.name, habits);
+    if (!result.ok) {
+      return res.status(500).json({ error: result.error || 'Failed to send reminder email' });
+    }
+    res.json({
+      ok: true,
+      email: user.email,
+      pendingCount: result.pendingCount,
+      completedCount: result.completedCount,
+      simulated: !!result.simulated
+    });
+  } catch (err) {
+    console.error('send-now error:', err);
+    res.status(500).json({ error: 'Server error sending reminder' });
+  }
+});
+
+app.put('/api/reminders/preferences', auth, async (req, res) => {
+  try {
+    const emailReminders = req.body.emailReminders !== false;
+    await User.findByIdAndUpdate(req.uid, { emailReminders });
+    res.json({ ok: true, emailReminders });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update reminder preferences' });
+  }
+});
+
+// Automated Daily Cron runner endpoint
+app.all('/api/cron/reminders', async (req, res) => {
+  try {
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const users = await User.find({ isVerified: true, emailReminders: { $ne: false }, lastReminderSentDate: { $ne: todayStr } }).limit(50);
+    let sentCount = 0;
+    for (const u of users) {
+      const state = await State.findOne({ user: u._id });
+      if (state && state.habits && state.habits.length) {
+        const sendRes = await sendHabitReminderEmail(u.email, u.name, state.habits);
+        if (sendRes.ok) {
+          sentCount++;
+          u.lastReminderSentDate = todayStr;
+          await u.save();
+        }
+      }
+    }
+    res.json({ ok: true, today: todayStr, eligibleUsers: users.length, sentCount });
+  } catch (err) {
+    console.error('Cron reminders error:', err);
+    res.status(500).json({ error: 'Cron execution failed' });
+  }
 });
 
 /* ---------- AI coach (Groq, key stays on the server) ---------- */

@@ -109,10 +109,10 @@ body.ready .fab{display:block}
   <section class="v" id="v3">
     <h3>AI coach ✨</h3>
     <div class="card pad">
-      <div class="r"><input class="in" id="nl" placeholder="Log in words: “ran 3km and meditated”"><button class="btn alt" id="nlBtn">Log</button></div>
+      <div class="r"><input class="in" id="nl" type="text" name="habit_quick_log" autocomplete="off" autocorrect="on" spellcheck="true" data-lpignore="true" data-form-type="other" placeholder="Quick log: “ran 3km and meditated”"><button class="btn alt" id="nlBtn">Log</button></div>
       <div class="r"><button class="btn alt" id="review">Weekly review</button><button class="btn alt" id="suggest">Suggest a habit</button></div>
       <div class="chat" id="chat"></div>
-      <div class="r"><input class="in" id="q" placeholder="Ask your coach…"><button class="btn" id="send">Send</button></div>
+      <div class="r"><input class="in" id="q" type="text" name="coach_chat_query" autocomplete="off" autocorrect="on" spellcheck="true" data-lpignore="true" placeholder="Ask your coach…"><button class="btn" id="send">Send</button></div>
       <div class="note" id="aiNote"></div>
     </div>
   </section>
@@ -172,10 +172,24 @@ body.ready .fab{display:block}
 
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--bd)">
         <div>
-          <div style="font-weight:500;font-size:15px">Reminders</div>
-          <div style="font-size:12px;color:var(--mu)">In-browser alerts for habit cues</div>
+          <div style="font-weight:500;font-size:15px">Browser Alerts</div>
+          <div style="font-size:12px;color:var(--mu)">In-browser notifications for habit cues</div>
         </div>
         <button class="btn alt" id="notif" style="padding:8px 14px;font-size:13px">🔔 Notify</button>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--bd)" id="emailReminderRow">
+        <div>
+          <div style="font-weight:500;font-size:15px">Email Reminders ✉️</div>
+          <div style="font-size:12px;color:var(--mu)" id="emailRemDesc">Daily checklist sent to your email</div>
+        </div>
+        <button class="btn alt" id="emailRemToggle" style="padding:8px 14px;font-size:13px">Enabled ✓</button>
+      </div>
+
+      <div style="padding:12px 0 4px;border-top:1px solid var(--bd)" id="sendReminderNowWrap">
+        <button class="btn alt" id="sendReminderNowBtn" style="width:100%;font-size:13px;padding:10px 14px;justify-content:center;display:flex;align-items:center;gap:6px">
+          <span>📨</span><span>Send Me Today's Reminder Email Now</span>
+        </button>
       </div>
 
       <div style="border-top:1px solid var(--bd);padding-top:12px">
@@ -417,6 +431,8 @@ $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
         $('logout').onclick = () => { location.href = '/login.html'; };
       }
       if ($('switchAccBtn')) $('switchAccBtn').style.display = 'none';
+      if ($('emailReminderRow')) $('emailReminderRow').style.display = 'none';
+      if ($('sendReminderNowWrap')) $('sendReminderNowWrap').style.display = 'none';
 
       render();
       reveal();
@@ -425,7 +441,7 @@ $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
 
     // Authenticated user
     sessionStorage.removeItem('habitly_trial_mode');
-    const { email, name, age } = await me.json();
+    const { email, name, age, emailReminders } = await me.json();
     const d = await (await fetch('/api/state')).json();
     habits = d.habits || [];
     mood = d.mood || {};
@@ -451,6 +467,57 @@ $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
     if ($('valName')) $('valName').textContent = name || '—';
     if ($('valAge')) $('valAge').textContent = (age !== undefined && age !== null && age !== '') ? `${age} years old` : '—';
     if ($('valEmail')) $('valEmail').textContent = email;
+
+    // Email reminders preference & test trigger
+    let emailRemEnabled = emailReminders !== false;
+    const remToggle = $('emailRemToggle');
+    const updateRemUI = () => {
+      if (remToggle) {
+        remToggle.textContent = emailRemEnabled ? 'Enabled ✓' : 'Disabled ✕';
+        remToggle.style.color = emailRemEnabled ? '#2d864e' : 'var(--mu)';
+      }
+    };
+    updateRemUI();
+
+    if (remToggle) {
+      remToggle.onclick = async () => {
+        emailRemEnabled = !emailRemEnabled;
+        updateRemUI();
+        try {
+          await fetch('/api/reminders/preferences', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ emailReminders: emailRemEnabled })
+          });
+          toast(emailRemEnabled ? '✉️ Email reminders enabled' : 'Email reminders turned off');
+        } catch (e) {
+          toast('Failed to save reminder preference');
+        }
+      };
+    }
+
+    const sendNowBtn = $('sendReminderNowBtn');
+    if (sendNowBtn) {
+      sendNowBtn.onclick = async () => {
+        sendNowBtn.disabled = true;
+        sendNowBtn.textContent = 'Sending email reminder…';
+        try {
+          const res = await fetch('/api/reminders/send-now', { method: 'POST' });
+          const j = await res.json();
+          if (res.ok) {
+            toast(`✉️ Reminder sent to ${email}! (${j.pendingCount} pending)`);
+          } else {
+            toast(j.error || 'Could not send reminder email');
+          }
+        } catch (e) {
+          toast('Network error sending reminder email');
+        } finally {
+          sendNowBtn.disabled = false;
+          sendNowBtn.innerHTML = '<span>📨</span><span>Send Me Today\'s Reminder Email Now</span>';
+        }
+      };
+    }
+
     if ($('logout')) {
       $('logout').textContent = '🚪 Sign Out';
       $('logout').onclick = async () => {
