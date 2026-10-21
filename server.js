@@ -385,14 +385,11 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
       await State.create({ user: user._id });
     }
 
-    const emailRes = await sendVerificationEmail(email, name, code);
+    await sendVerificationEmail(email, name, code);
     res.json({
       ok: true,
       needVerification: true,
-      email: user.email,
-      simulated: !!emailRes.simulated || !emailRes.ok,
-      simulatedCode: (emailRes.simulated || !emailRes.ok) ? code : undefined,
-      emailError: emailRes.error
+      email: user.email
     });
   } catch (e) {
     if (e.code === 11000) return res.status(409).json({ error: 'That email is already registered' });
@@ -448,13 +445,10 @@ app.post('/api/auth/resend-code', authLimiter, async (req, res) => {
     user.verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
-    const emailRes = await sendVerificationEmail(email, user.name, code);
+    await sendVerificationEmail(email, user.name, code);
     res.json({
       ok: true,
-      message: 'New verification code sent',
-      simulated: !!emailRes.simulated || !emailRes.ok,
-      simulatedCode: (emailRes.simulated || !emailRes.ok) ? code : undefined,
-      emailError: emailRes.error
+      message: 'New verification code sent to your email'
     });
   } catch (e) {
     console.error('Resend code error:', e.message);
@@ -475,14 +469,11 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
       user.verificationCode = code;
       user.verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
       await user.save();
-      const emailRes = await sendVerificationEmail(user.email, user.name, code);
+      await sendVerificationEmail(user.email, user.name, code);
       return res.status(403).json({
         error: 'Please verify your email address to continue',
         needVerification: true,
-        email: user.email,
-        simulated: !!emailRes.simulated || !emailRes.ok,
-        simulatedCode: (emailRes.simulated || !emailRes.ok) ? code : undefined,
-        emailError: emailRes.error
+        email: user.email
       });
     }
 

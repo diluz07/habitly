@@ -798,11 +798,6 @@
           </p>
         </div>
 
-        <div id="simulatedCodeNotice" style="display: none; background: rgba(200,85,61,0.08); border: 1px dashed var(--ac); border-radius: 12px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 16px; text-align: center; color: var(--tx);">
-          💡 <b>Demo/Dev Mode:</b> Your code is <code id="simCodeVal" style="background: var(--soft); padding: 2px 6px; border-radius: 6px; font-weight: 700; color: var(--ac);"></code><br>
-          <span style="font-size: 11px; color: var(--mu);">(Live emails require <code>RESEND_API_KEY</code>)</span>
-        </div>
-
         <form id="verifyForm" novalidate>
           <div class="form-group">
             <label class="form-label" for="otpInput">
@@ -1152,7 +1147,7 @@
 
           if (res.ok && data.ok) {
             if (data.needVerification) {
-              openVerificationScreen(data.email, data.simulatedCode, data.emailError);
+              openVerificationScreen(data.email);
               return;
             }
             btnLabel.textContent = 'Success! Redirecting…';
@@ -1162,8 +1157,8 @@
 
           // If unverified account login attempt
           if (data && data.needVerification) {
-            openVerificationScreen(data.email, data.simulatedCode, data.emailError);
-            showError(data.emailError ? ('Resend: ' + data.emailError) : 'Please enter the 6-digit verification code sent to your email.');
+            openVerificationScreen(data.email);
+            showError('Please enter the 6-digit verification code sent to your email.');
             return;
           }
 
@@ -1201,8 +1196,6 @@
       const verifySpinner = $('verifySpinner');
       const verifyBtnLabel = $('verifyBtnLabel');
       const verifyEmailTarget = $('verifyEmailTarget');
-      const simulatedCodeNotice = $('simulatedCodeNotice');
-      const simCodeVal = $('simCodeVal');
       const resendCodeBtn = $('resendCodeBtn');
       const backToLoginBtn = $('backToLoginBtn');
       const modeTabs = $('modeTabs');
@@ -1212,7 +1205,7 @@
       let resendCooldown = 0;
       let resendTimer = null;
 
-      function openVerificationScreen(email, simCode, emailError) {
+      function openVerificationScreen(email) {
         pendingEmail = email;
         clearError();
         authForm.style.display = 'none';
@@ -1221,17 +1214,6 @@
         verifyCard.style.display = 'block';
         verifyEmailTarget.textContent = email;
         otpInput.value = '';
-
-        if (emailError) {
-          showError('Resend note: ' + emailError);
-        }
-
-        if (simCode) {
-          simulatedCodeNotice.style.display = 'block';
-          simCodeVal.textContent = simCode;
-        } else {
-          simulatedCodeNotice.style.display = 'none';
-        }
 
         setTimeout(() => otpInput.focus(), 150);
       }
@@ -1260,10 +1242,6 @@
           });
           const data = await res.json().catch(() => ({}));
           if (res.ok && data.ok) {
-            if (data.simulatedCode) {
-              simulatedCodeNotice.style.display = 'block';
-              simCodeVal.textContent = data.simulatedCode;
-            }
             resendCooldown = 60;
             resendCodeBtn.textContent = 'Resend in 60s';
             clearInterval(resendTimer);
