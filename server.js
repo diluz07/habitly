@@ -311,17 +311,15 @@ async function connectDb() {
 
 /* Ensure database connection before handling stateful API routes */
 app.use('/api', async (req, res, next) => {
-  if (req.path.startsWith('/auth') || req.path === '/me' || req.path === '/state') {
-    try {
-      await connectDb();
-    } catch (e) {
-      console.error('Database connection error:', e.message);
-      return res.status(503).json({
-        error: 'Database is connecting or offline. In MongoDB Atlas Network Access, ensure 0.0.0.0/0 (Anywhere) is enabled for Vercel.'
-      });
-    }
+  try {
+    await connectDb();
+    next();
+  } catch (e) {
+    console.error('Database connection error:', e.message);
+    return res.status(503).json({
+      error: 'Database is connecting or offline. In MongoDB Atlas Network Access, ensure 0.0.0.0/0 (Anywhere) is enabled for Vercel.'
+    });
   }
-  next();
 });
 
 /* ---------- Auth ---------- */
