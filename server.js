@@ -11,7 +11,7 @@ const rateLimit = require('express-rate-limit');
 const { Resend } = require('resend');
 
 const { MONGODB_URI, JWT_SECRET, GROQ_API_KEY, RESEND_API_KEY, EMAIL_FROM,
-  GROQ_MODEL = 'llama-3.3-70b-versatile', PORT = 3000 } = process.env;
+  GROQ_MODEL = 'qwen/qwen3.8-27b', PORT = 3000 } = process.env;
 if (!MONGODB_URI || !JWT_SECRET) { console.error('Set MONGODB_URI and JWT_SECRET in .env'); process.exit(1); }
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
@@ -355,17 +355,29 @@ app.post('/api/ai/chat', auth, aiLimiter, async (req, res) => {
       messages.some(m => typeof m.content !== 'string' || m.content.length > 8000 || !['user', 'assistant', 'system'].includes(m.role)))
     return res.status(400).json({ error: 'Invalid messages' });
   try {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + GROQ_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: GROQ_MODEL, messages, max_tokens: 600, temperature: 0.6 }),
-    });
-    const j = await r.json();
-    if (r.status === 429) return res.status(429).json({ error: 'AI limit reached, try again later' });
-    const text = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-    if (!text) { console.error('Groq error:', j.error && j.error.message); return res.status(502).json({ error: 'AI unavailable' }); }
-    res.json({ text: text.trim() });
-  } catch (e) { console.error(e); res.status(502).json({ error: 'AI unavailable' }); }
+    const modelsToTry = Array.from(new Set([GROQ_MODEL, 'qwen/qwen3.8-27b', 'allam-2-7b', 'openai/gpt-oss-120b'].filter(Boolean)));
+    let lastError = null;
+    for (const model of modelsToTry) {
+      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + GROQ_API_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, messages, max_tokens: 600, temperature: 0.6 }),
+      });
+      const j = await r.json();
+      if (r.status === 429) return res.status(429).json({ error: 'AI limit reached, try again later' });
+      const msg = j.choices && j.choices[0] && j.choices[0].message;
+      const text = msg && (msg.content || msg.reasoning);
+      if (text && text.trim()) {
+        return res.json({ text: text.trim() });
+      }
+      lastError = j.error && j.error.message;
+      console.warn(`Groq model ${model} failed:`, lastError);
+    }
+    return res.status(502).json({ error: lastError || 'AI unavailable' });
+  } catch (e) {
+    console.error('AI chat exception:', e);
+    res.status(502).json({ error: 'AI unavailable' });
+  }
 });
 
 if (require.main === module) {

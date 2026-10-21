@@ -323,8 +323,9 @@ async function sample(input,opts={}){
   const messages=typeof input==='string'?[{role:'user',content:input}]:input;
   const res=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});
   if(res.status===401){location.href='/login.html';throw new Error('auth')}
-  if(!res.ok)throw new Error('ai '+res.status);
-  const{text}=await res.json();if(opts.onText)opts.onText({text});return{text};
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(data.error||('ai '+res.status));
+  const text=data.text||'';if(opts.onText)opts.onText({text});return{text};
 }
 sample.json=async prompt=>{const{text}=await sample(prompt);const m=text.match(/\[[\s\d,]*\]/);if(m){try{return JSON.parse(m[0])}catch(e){}}
   try{const v=JSON.parse(text.slice(text.indexOf('{'),text.lastIndexOf('}')+1));return Object.values(v).find(Array.isArray)||[]}catch(e){return[]}};
@@ -332,11 +333,14 @@ $('aiNote').textContent='The coach runs through your server.';
 const summary=()=>JSON.stringify({today:today(),recentMood:Object.entries(mood).slice(-7),habits:habits.map(h=>({name:h.name,schedule:dlabel(h),streak:streak(h),doneLast7:wk(h)[0],of:wk(h)[1],doneToday:!!h.days[today()],last14:Array.from({length:14},(_,i)=>h.days[ago(13-i)]?1:0).join('')}))});
 function say(t,c){const m=document.createElement('div');m.className='msg '+c;m.textContent=t;$('chat').appendChild(m);$('chat').scrollTop=1e9;return m}
 async function ask(p,u){
-  
   if(u)say(u,'me');const m=say('Thinking…','ai');
   const ctx='You are a warm, concise habit coach (max 120 words, no markdown). Be specific, kind, practical; suggest tiny steps. User data: '+summary()+'\n';
-  try{const r=await sample([...history,{role:'user',content:ctx+p}],{cache:false,onText:({text})=>{m.textContent=text}});m.textContent=r.text;history.push({role:'user',content:p},{role:'assistant',content:r.text});history=history.slice(-8)}
-  catch(e){m.textContent='The coach is busy or today’s free AI limit was reached. Try again in a bit.'}
+  try{
+    const r=await sample([...history,{role:'user',content:ctx+p}],{cache:false,onText:({text})=>{m.textContent=text}});
+    m.textContent=r.text;history.push({role:'user',content:p},{role:'assistant',content:r.text});history=history.slice(-8);
+  } catch(e){
+    m.textContent=e.message&&!e.message.startsWith('ai ')?e.message:'The coach is temporarily busy. Please try again in a bit.';
+  }
 }
 $('send').onclick=()=>{const v=$('q').value.trim();if(!v)return;$('q').value='';ask(v,v)};$('q').onkeydown=e=>{if(e.key==='Enter')$('send').click()};
 $('review').onclick=()=>ask('Write my weekly review: one win, one struggle, one suggestion for next week.','Weekly review please');
