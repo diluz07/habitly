@@ -8,6 +8,7 @@
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1713;--card:#262019;--tx:#f1e9dc;--mu:#a1958a;--ac:#e0735a;--bd:#3a3128;--soft:#30281f}}
 :root[data-theme="dark"]{--bg:#1c1713;--card:#262019;--tx:#f1e9dc;--mu:#a1958a;--ac:#e0735a;--bd:#3a3128;--soft:#30281f}
+:root[data-theme="light"]{--bg:#f6efe2;--card:#fdfaf3;--tx:#2a211d;--mu:#8c8176;--ac:#c8553d;--bd:#e8dfcd;--soft:#efe6d6}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 "DM Sans",system-ui,-apple-system,sans-serif}
 button,input{font:inherit;color:inherit}
@@ -30,7 +31,7 @@ button,input{font:inherit;color:inherit}
 h3{font:400 22px Fraunces,Georgia,serif;margin:0 0 12px}
 nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
 nav>div{display:flex;width:100%;max-width:480px}
-nav button{flex:1;background:none;border:0;padding:10px 0 12px;color:var(--mu);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+nav button{flex:1;background:none;border:0;padding:8px 0 10px;color:var(--mu);font-size:10px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
 nav button span{display:block;font-size:20px;letter-spacing:0}nav button.on{color:var(--tx)}
 .fab{position:fixed;right:max(18px,calc(50% - 222px));bottom:calc(78px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--tx);color:var(--bg);font-size:30px;cursor:pointer;z-index:6;box-shadow:0 6px 18px rgba(0,0,0,.25)}
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;justify-content:center;z-index:30}.ov.show{display:flex}
@@ -114,7 +115,83 @@ body.ready .fab{display:block}
       <div class="r"><input class="in" id="q" placeholder="Ask your coach…"><button class="btn" id="send">Send</button></div>
       <div class="note" id="aiNote"></div>
     </div>
-    <div class="card pad"><div class="note" id="syncNote" style="margin:0 0 10px">Saved in this browser.</div><button class="btn alt" id="notif">🔔 Enable notifications</button> <button class="btn alt" id="logout">Log out</button></div>
+  </section>
+
+  <section class="v" id="v4">
+    <h3>Profile &amp; Account</h3>
+
+    <div class="card pad" style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
+        <div id="profAvatar" style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--ac),#e0a458);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;box-shadow:0 6px 16px rgba(0,0,0,0.12)">
+          👤
+        </div>
+        <div style="min-width:0;flex:1">
+          <div id="profDisplayName" style="font-size:19px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            Habitly Member
+          </div>
+          <div id="profBadge" class="badge" style="display:inline-block;margin-top:4px;font-size:12px;font-weight:500">
+            Cloud Synced ☁️
+          </div>
+        </div>
+      </div>
+
+      <div class="gh eb" style="margin:16px 0 8px"><span>Account Information</span></div>
+      <div style="border-top:1px solid var(--bd)">
+        <div class="row" style="padding:11px 0;justify-content:space-between;border-top:0">
+          <span style="color:var(--mu);font-size:13px">Full Name</span>
+          <b id="valName" style="color:var(--tx);font-weight:600;font-size:14px">—</b>
+        </div>
+        <div class="row" style="padding:11px 0;justify-content:space-between">
+          <span style="color:var(--mu);font-size:13px">Age</span>
+          <b id="valAge" style="color:var(--tx);font-weight:600;font-size:14px">—</b>
+        </div>
+        <div class="row" style="padding:11px 0;justify-content:space-between">
+          <span style="color:var(--mu);font-size:13px">Email Address</span>
+          <b id="valEmail" style="color:var(--tx);font-weight:600;font-size:14px;word-break:break-all;text-align:right">—</b>
+        </div>
+        <div class="row" style="padding:11px 0;justify-content:space-between">
+          <span style="color:var(--mu);font-size:13px">Habits Tracked</span>
+          <b id="valHabitCount" style="color:var(--tx);font-weight:600;font-size:14px">0</b>
+        </div>
+        <div class="row" style="padding:11px 0;justify-content:space-between">
+          <span style="color:var(--mu);font-size:13px">Total Experience</span>
+          <b id="valXp" style="color:var(--tx);font-weight:600;font-size:14px">0 XP</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="gh eb"><span>Preferences &amp; Cloud</span></div>
+    <div class="card pad" style="margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px">
+        <div>
+          <div style="font-weight:500;font-size:15px">Appearance</div>
+          <div style="font-size:12px;color:var(--mu)">Toggle dark or light theme</div>
+        </div>
+        <button class="btn alt" id="themeBtn" style="padding:8px 14px;font-size:13px">🌓 Theme</button>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--bd)">
+        <div>
+          <div style="font-weight:500;font-size:15px">Reminders</div>
+          <div style="font-size:12px;color:var(--mu)">In-browser alerts for habit cues</div>
+        </div>
+        <button class="btn alt" id="notif" style="padding:8px 14px;font-size:13px">🔔 Notify</button>
+      </div>
+
+      <div style="border-top:1px solid var(--bd);padding-top:12px">
+        <div class="note" id="syncNote" style="margin:0;font-size:13px">☁️ Saved in this browser.</div>
+      </div>
+    </div>
+
+    <div class="gh eb"><span>Session</span></div>
+    <div class="card pad" style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn" id="logout" style="width:100%;padding:13px;font-size:15px">
+        🚪 Sign Out
+      </button>
+      <button class="btn alt" id="switchAccBtn" style="width:100%;padding:12px;font-size:14px">
+        🔄 Switch Account / Sign In Different Email
+      </button>
+    </div>
   </section>
 </div>
 
@@ -124,6 +201,8 @@ body.ready .fab{display:block}
 <div class="toast" id="toast"></div>
 
 <script>
+const savedTheme=localStorage.getItem('habitly_theme');
+if(savedTheme)document.documentElement.setAttribute('data-theme',savedTheme);
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const key=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
@@ -196,6 +275,8 @@ function render(){
   pick('moodB',FACES,'m');pick('enB',ENG,'e');
   /* stats */
   const x=xp();$('lvl').textContent='Level '+(Math.floor(x/100)+1)+' · '+x+' XP';$('xpb').style.width=(x%100)+'%';
+  if($('valHabitCount'))$('valHabitCount').textContent=habits.length;
+  if($('valXp'))$('valXp').textContent=x+' XP';
   const G=$('garden');G.innerHTML='';habits.forEach(h=>{const s=document.createElement('span');s.textContent=stage(streak(h));s.title=h.name+' · '+streak(h)+' day streak';G.appendChild(s)});
   const dw=(n.getDay()+6)%7,H=$('heat');H.innerHTML='';
   for(let k=0;k<119;k++){const o=dw+112-k,c=document.createElement('div');c.className='hc';if(o<0){c.style.visibility='hidden'}else{const d=ago(o),sc=habits.filter(h=>sched(h,d)),f=sc.length?sc.filter(h=>h.days[d]).length/sc.length:0;if(f)c.style.background='color-mix(in srgb,var(--ac) '+Math.round(25+f*75)+'%,var(--soft))'}H.appendChild(c)}
@@ -220,8 +301,15 @@ function render(){
 }
 $('pm').onclick=()=>{mo--;render()};$('nm2').onclick=()=>{mo++;render()};
 $('fab').onclick=()=>newHabit();$('add2').onclick=()=>newHabit();$('add3').onclick=()=>newHabit();
-['Today|⌂','Stats|◔','Calendar|▦','Coach|✦'].forEach((s,i)=>{const[l,ic]=s.split('|'),b=document.createElement('button');b.innerHTML='<span>'+ic+'</span>'+l;b.onclick=()=>{tab=i;document.querySelectorAll('.v').forEach((v,j)=>v.classList.toggle('show',j===i));[...$('nav').children].forEach((x,j)=>x.classList.toggle('on',j===i));$('fab').style.display=i===0?'block':'none'};$('nav').appendChild(b)});
+['Today|⌂','Stats|◔','Calendar|▦','Coach|✦','Profile|👤'].forEach((s,i)=>{const[l,ic]=s.split('|'),b=document.createElement('button');b.innerHTML='<span>'+ic+'</span>'+l;b.onclick=()=>{tab=i;document.querySelectorAll('.v').forEach((v,j)=>v.classList.toggle('show',j===i));[...$('nav').children].forEach((x,j)=>x.classList.toggle('on',j===i));$('fab').style.display=i===0?'block':'none'};$('nav').appendChild(b)});
 $('nav').children[0].classList.add('on');
+$('themeBtn').onclick=()=>{
+  const cur=document.documentElement.getAttribute('data-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('habitly_theme',next);
+  toast(next==='dark'?'🌙 Dark mode enabled':'☀️ Light mode enabled');
+};
 
 /* reminders */
 const fired={};
@@ -261,12 +349,6 @@ $('nlBtn').onclick=async()=>{const v=$('nl').value.trim();if(!v||!habits.length)
 $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
 
 /* account + data */
-$('logout').onclick=async()=>{
-  sessionStorage.removeItem('habitly_trial_mode');
-  try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}
-  location.href='/login.html';
-};
-
 (async()=>{
   const urlParams = new URLSearchParams(window.location.search);
   const isTrial = urlParams.get('trial') === '1' || sessionStorage.getItem('habitly_trial_mode') === 'true';
@@ -314,7 +396,24 @@ $('logout').onclick=async()=>{
       setSync('✨ Trial Mode · Saved in this browser · [Create free account to sync ☁️]');
       const tb = $('trialBanner');
       if (tb) tb.style.display = 'flex';
-      $('logout').textContent = 'Exit Trial & Sign In';
+
+      // Profile details for guest trial
+      if ($('profAvatar')) $('profAvatar').textContent = '🌱';
+      if ($('profDisplayName')) $('profDisplayName').textContent = 'Guest Explorer';
+      if ($('profBadge')) {
+        $('profBadge').textContent = 'Guest Trial · Local';
+        $('profBadge').style.background = 'var(--soft)';
+        $('profBadge').style.color = 'var(--mu)';
+      }
+      if ($('valName')) $('valName').textContent = 'Guest User';
+      if ($('valAge')) $('valAge').textContent = '— (Not set)';
+      if ($('valEmail')) $('valEmail').textContent = 'None (Guest Mode)';
+      if ($('logout')) {
+        $('logout').textContent = '✨ Sign In or Create Account';
+        $('logout').onclick = () => { location.href = '/login.html'; };
+      }
+      if ($('switchAccBtn')) $('switchAccBtn').style.display = 'none';
+
       render();
       reveal();
       return;
@@ -322,7 +421,7 @@ $('logout').onclick=async()=>{
 
     // Authenticated user
     sessionStorage.removeItem('habitly_trial_mode');
-    const { email, name } = await me.json();
+    const { email, name, age } = await me.json();
     const d = await (await fetch('/api/state')).json();
     habits = d.habits || [];
     mood = d.mood || {};
@@ -335,6 +434,36 @@ $('logout').onclick=async()=>{
     };
     const displayName = name ? `${name} (${email})` : email;
     setSync('☁️ Signed in as ' + displayName + ' · synced');
+
+    // Populate user profile section
+    const initial = (name && name.trim()) ? name.trim()[0].toUpperCase() : (email ? email[0].toUpperCase() : '👤');
+    if ($('profAvatar')) $('profAvatar').textContent = initial;
+    if ($('profDisplayName')) $('profDisplayName').textContent = name || email.split('@')[0];
+    if ($('profBadge')) {
+      $('profBadge').textContent = 'Cloud Synced ☁️';
+      $('profBadge').style.background = 'rgba(72, 167, 104, 0.15)';
+      $('profBadge').style.color = '#2d864e';
+    }
+    if ($('valName')) $('valName').textContent = name || '—';
+    if ($('valAge')) $('valAge').textContent = (age !== undefined && age !== null && age !== '') ? `${age} years old` : '—';
+    if ($('valEmail')) $('valEmail').textContent = email;
+    if ($('logout')) {
+      $('logout').textContent = '🚪 Sign Out';
+      $('logout').onclick = async () => {
+        sessionStorage.removeItem('habitly_trial_mode');
+        try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+        location.href = '/login.html';
+      };
+    }
+    if ($('switchAccBtn')) {
+      $('switchAccBtn').style.display = 'block';
+      $('switchAccBtn').onclick = async () => {
+        sessionStorage.removeItem('habitly_trial_mode');
+        try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+        location.href = '/login.html';
+      };
+    }
+
     render();
     reveal();
   } catch (e) {

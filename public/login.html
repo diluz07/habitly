@@ -349,7 +349,8 @@
 
     input[type="email"],
     input[type="password"],
-    input[type="text"] {
+    input[type="text"],
+    input[type="number"] {
       width: 100%;
       padding: 13px 44px 13px 42px;
       background: var(--input-bg);
@@ -360,6 +361,14 @@
       font-size: 14.5px;
       outline: none;
       transition: all 0.2s ease;
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
 
     input:focus {
@@ -648,7 +657,7 @@
     <!-- Login/Register Card -->
     <section class="card" aria-labelledby="formTitle">
       <!-- Segmented Mode Control -->
-      <div class="segmented-control" role="tablist" aria-label="Authentication mode">
+      <div class="segmented-control" id="modeTabs" role="tablist" aria-label="Authentication mode">
         <button id="tabLogin" class="active" role="tab" aria-selected="true" type="button">Log In</button>
         <button id="tabSignup" role="tab" aria-selected="false" type="button">Create Account</button>
       </div>
@@ -682,7 +691,8 @@
 
         <div class="form-group" id="ageGroup" style="display: none;">
           <label class="form-label" for="ageInput">
-            <span>Age (Optional)</span>
+            <span>Age</span>
+            <span style="font-weight: 400; text-transform: none; color: var(--mu); font-size: 11.5px;">Optional (5–120)</span>
           </label>
           <div class="input-wrapper">
             <span class="input-icon" aria-hidden="true">
@@ -691,6 +701,7 @@
             <input
               id="ageInput"
               type="number"
+              inputmode="numeric"
               min="5"
               max="120"
               placeholder="e.g. 24"
@@ -772,8 +783,65 @@
         </button>
       </form>
 
+      <!-- Email Verification Card (Activated on Signup or unverified Login) -->
+      <div id="verifyCard" style="display: none;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="width: 58px; height: 58px; border-radius: 50%; background: var(--soft); color: var(--ac); font-size: 26px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+            ✉️
+          </div>
+          <h2 style="font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 500; margin: 0 0 8px; color: var(--tx);">
+            Check your inbox
+          </h2>
+          <p style="font-size: 13.5px; color: var(--mu); line-height: 1.5; margin: 0;">
+            We sent a 6-digit verification code to<br>
+            <b id="verifyEmailTarget" style="color: var(--tx); font-weight: 600;"></b>
+          </p>
+        </div>
+
+        <div id="simulatedCodeNotice" style="display: none; background: rgba(200,85,61,0.08); border: 1px dashed var(--ac); border-radius: 12px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 16px; text-align: center; color: var(--tx);">
+          💡 <b>Demo/Dev Mode:</b> Your code is <code id="simCodeVal" style="background: var(--soft); padding: 2px 6px; border-radius: 6px; font-weight: 700; color: var(--ac);"></code><br>
+          <span style="font-size: 11px; color: var(--mu);">(Live emails require <code>RESEND_API_KEY</code>)</span>
+        </div>
+
+        <form id="verifyForm" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="otpInput">
+              <span>6-Digit Verification Code</span>
+              <span id="codeTimer" style="font-weight: 400; text-transform: none; color: var(--mu); font-size: 11.5px;">Valid for 15 mins</span>
+            </label>
+            <div class="input-wrapper">
+              <input
+                id="otpInput"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="6"
+                placeholder="123456"
+                autocomplete="one-time-code"
+                style="letter-spacing: 8px; text-align: center; font-size: 22px; font-weight: 700;"
+                required
+              >
+            </div>
+          </div>
+
+          <button class="btn-submit" id="verifySubmitBtn" type="submit" style="margin-top: 14px;">
+            <span class="spinner" id="verifySpinner" aria-hidden="true" style="display: none;"></span>
+            <span id="verifyBtnLabel">Verify &amp; Start Habitly</span>
+          </button>
+        </form>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; font-size: 13px;">
+          <button class="link-subtle" id="resendCodeBtn" type="button" style="background: none; border: 0; padding: 0; cursor: pointer;">
+            Resend code
+          </button>
+          <button class="link-subtle" id="backToLoginBtn" type="button" style="background: none; border: 0; padding: 0; cursor: pointer;">
+            ← Change email
+          </button>
+        </div>
+      </div>
+
       <!-- Explore Trial Mode -->
-      <div class="trial-box">
+      <div class="trial-box" id="trialBox">
         <button class="btn-trial" id="trialBtn" type="button" title="Try Habitly in guest mode without an account">
           <span>🌱</span> Explore Habitly First (No Sign-in Needed) →
         </button>
@@ -1083,8 +1151,19 @@
           const data = await res.json().catch(() => ({}));
 
           if (res.ok && data.ok) {
+            if (data.needVerification) {
+              openVerificationScreen(data.email, data.simulatedCode);
+              return;
+            }
             btnLabel.textContent = 'Success! Redirecting…';
             window.location.href = '/';
+            return;
+          }
+
+          // If unverified account login attempt
+          if (data && data.needVerification) {
+            openVerificationScreen(data.email, data.simulatedCode);
+            showError('Please enter the 6-digit verification code sent to your email.');
             return;
           }
 
@@ -1111,6 +1190,137 @@
           submitBtn.disabled = false;
           btnSpinner.style.display = 'none';
           btnLabel.textContent = currentMode === 'login' ? 'Log in to Habitly' : 'Create Free Account';
+        }
+      });
+
+      // Verification Flow handlers
+      const verifyCard = $('verifyCard');
+      const verifyForm = $('verifyForm');
+      const otpInput = $('otpInput');
+      const verifySubmitBtn = $('verifySubmitBtn');
+      const verifySpinner = $('verifySpinner');
+      const verifyBtnLabel = $('verifyBtnLabel');
+      const verifyEmailTarget = $('verifyEmailTarget');
+      const simulatedCodeNotice = $('simulatedCodeNotice');
+      const simCodeVal = $('simCodeVal');
+      const resendCodeBtn = $('resendCodeBtn');
+      const backToLoginBtn = $('backToLoginBtn');
+      const modeTabs = $('modeTabs');
+      const trialBox = $('trialBox');
+
+      let pendingEmail = '';
+      let resendCooldown = 0;
+      let resendTimer = null;
+
+      function openVerificationScreen(email, simCode) {
+        pendingEmail = email;
+        clearError();
+        authForm.style.display = 'none';
+        if (trialBox) trialBox.style.display = 'none';
+        if (modeTabs) modeTabs.style.display = 'none';
+        verifyCard.style.display = 'block';
+        verifyEmailTarget.textContent = email;
+        otpInput.value = '';
+
+        if (simCode) {
+          simulatedCodeNotice.style.display = 'block';
+          simCodeVal.textContent = simCode;
+        } else {
+          simulatedCodeNotice.style.display = 'none';
+        }
+
+        setTimeout(() => otpInput.focus(), 150);
+      }
+
+      function closeVerificationScreen() {
+        verifyCard.style.display = 'none';
+        authForm.style.display = 'block';
+        if (trialBox) trialBox.style.display = 'block';
+        if (modeTabs) modeTabs.style.display = 'grid';
+        clearError();
+      }
+
+      backToLoginBtn.addEventListener('click', closeVerificationScreen);
+
+      resendCodeBtn.addEventListener('click', async () => {
+        if (resendCooldown > 0) return;
+        clearError();
+        resendCodeBtn.disabled = true;
+        resendCodeBtn.textContent = 'Sending…';
+
+        try {
+          const res = await fetch(API_BASE + '/api/auth/resend-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: pendingEmail })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.ok) {
+            if (data.simulatedCode) {
+              simulatedCodeNotice.style.display = 'block';
+              simCodeVal.textContent = data.simulatedCode;
+            }
+            resendCooldown = 60;
+            resendCodeBtn.textContent = 'Resend in 60s';
+            clearInterval(resendTimer);
+            resendTimer = setInterval(() => {
+              resendCooldown--;
+              if (resendCooldown <= 0) {
+                clearInterval(resendTimer);
+                resendCodeBtn.disabled = false;
+                resendCodeBtn.textContent = 'Resend code';
+              } else {
+                resendCodeBtn.textContent = 'Resend in ' + resendCooldown + 's';
+              }
+            }, 1000);
+          } else {
+            showError(data.error || 'Could not resend code. Please try again.');
+            resendCodeBtn.disabled = false;
+            resendCodeBtn.textContent = 'Resend code';
+          }
+        } catch (e) {
+          showError('Network error while resending verification code.');
+          resendCodeBtn.disabled = false;
+          resendCodeBtn.textContent = 'Resend code';
+        }
+      });
+
+      verifyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearError();
+        const code = otpInput.value.trim();
+        if (!code || code.length < 6) {
+          showError('Please enter the 6-digit verification code.');
+          otpInput.focus();
+          return;
+        }
+
+        verifySubmitBtn.disabled = true;
+        verifySpinner.style.display = 'inline-block';
+        verifyBtnLabel.textContent = 'Verifying…';
+
+        try {
+          const res = await fetch(API_BASE + '/api/auth/verify-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ email: pendingEmail, code })
+          });
+          const data = await res.json().catch(() => ({}));
+
+          if (res.ok && data.ok) {
+            verifyBtnLabel.textContent = '✓ Verified! Loading Habitly…';
+            window.location.href = '/';
+            return;
+          }
+
+          showError(data.error || 'Verification failed. Please check the code.');
+        } catch (err) {
+          showError('Connection error. Please check your internet connection.');
+        } finally {
+          verifySubmitBtn.disabled = false;
+          verifySpinner.style.display = 'none';
+          verifyBtnLabel.textContent = 'Verify & Start Habitly';
         }
       });
 

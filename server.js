@@ -8,9 +8,13 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
-const { MONGODB_URI, JWT_SECRET, GROQ_API_KEY,
+const { Resend } = require('resend');
+
+const { MONGODB_URI, JWT_SECRET, GROQ_API_KEY, RESEND_API_KEY, EMAIL_FROM,
   GROQ_MODEL = 'llama-3.3-70b-versatile', PORT = 3000 } = process.env;
 if (!MONGODB_URI || !JWT_SECRET) { console.error('Set MONGODB_URI and JWT_SECRET in .env'); process.exit(1); }
+
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 /* ---------- Models ---------- */
 const User = mongoose.model('User', new mongoose.Schema({
@@ -18,7 +22,60 @@ const User = mongoose.model('User', new mongoose.Schema({
   age: { type: Number, min: 1, max: 120 },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true },
+  isVerified: { type: Boolean, default: false },
+  verificationCode: { type: String },
+  verificationExpires: { type: Date },
 }, { timestamps: true }));
+
+async function sendVerificationEmail(email, name, code) {
+  if (!resend) {
+    console.log('\n======================================================');
+    console.log(`[Resend Sim] Verification code for ${email}: ${code}`);
+    console.log('To send live emails, set RESEND_API_KEY in .env and Vercel');
+    console.log('======================================================\n');
+    return { ok: true, simulated: true };
+  }
+  const from = EMAIL_FROM || 'Habitly <onboarding@resend.dev>';
+  const greeting = name ? `Hi ${name},` : 'Hello,';
+  try {
+    const { data, error } = await resend.emails.send({
+      from,
+      to: email,
+      subject: `${code} is your Habitly verification code`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#f6efe2;margin:0;padding:32px 16px;color:#2a211d">
+          <div style="max-width:480px;margin:0 auto;background:#fdfaf3;border:1px solid #e8dfcd;border-radius:22px;padding:32px 24px;box-shadow:0 8px 30px rgba(42,33,29,0.06)">
+            <div style="font-size:38px;text-align:center;margin-bottom:12px">🌱</div>
+            <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:600;text-align:center;margin:0 0 8px;color:#2a211d">Verify your email</h1>
+            <p style="font-size:14.5px;color:#7a6f64;text-align:center;line-height:1.5;margin:0 0 24px">
+              ${greeting} Welcome to Habitly! Enter the 6-digit verification code below to activate your account and start tracking your habits.
+            </p>
+            <div style="background:#efe6d6;border-radius:14px;padding:18px 0;text-align:center;margin:20px 0">
+              <span style="font-family:monospace,'DM Sans',sans-serif;font-size:34px;font-weight:700;letter-spacing:8px;color:#c8553d">
+                ${code}
+              </span>
+            </div>
+            <p style="font-size:12.5px;color:#9b8e82;text-align:center;margin:20px 0 0;line-height:1.4">
+              This verification code expires in 15 minutes.<br>If you didn't create a Habitly account, you can safely ignore this email.
+            </p>
+          </div>
+        </body>
+        </html>
+      `,
+    });
+    if (error) {
+      console.error('Resend error:', error);
+      return { ok: false, error: error.message };
+    }
+    return { ok: true, data };
+  } catch (err) {
+    console.error('Resend exception:', err.message);
+    return { ok: false, error: err.message };
+  }
+}
 
 // One document per user holds their habits and mood logs (matches the app's data shape).
 const State = mongoose.model('State', new mongoose.Schema({
@@ -118,27 +175,135 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
   }
   if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: 'Enter a valid email' });
   if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+
   try {
-    const user = await User.create({
-      name,
-      age: rawAge,
-      email,
-      passwordHash: await bcrypt.hash(password, 12),
+    let user = await User.findOne({ email });
+    if (user && user.isVerified) {
+      return res.status(409).json({ error: 'That email is already registered and verified. Please log in.' });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    if (user && !user.isVerified) {
+      user.name = name;
+      user.age = rawAge;
+      user.passwordHash = passwordHash;
+      user.verificationCode = code;
+      user.verificationExpires = expires;
+      await user.save();
+    } else {
+      user = await User.create({
+        name,
+        age: rawAge,
+        email,
+        passwordHash,
+        isVerified: false,
+        verificationCode: code,
+        verificationExpires: expires,
+      });
+      await State.create({ user: user._id });
+    }
+
+    const emailRes = await sendVerificationEmail(email, name, code);
+    res.json({
+      ok: true,
+      needVerification: true,
+      email: user.email,
+      simulated: !!emailRes.simulated,
+      simulatedCode: emailRes.simulated ? code : undefined
     });
-    await State.create({ user: user._id });
-    setCookie(res, user._id);
-    res.json({ ok: true, name: user.name, age: user.age, email: user.email });
   } catch (e) {
     if (e.code === 11000) return res.status(409).json({ error: 'That email is already registered' });
     console.error('Signup error:', e.message);
     res.status(500).json({ error: 'Could not create account' });
   }
 });
+
+app.post('/api/auth/verify-email', authLimiter, async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const code = String(req.body.code || '').trim();
+
+  if (!email || !code) return res.status(400).json({ error: 'Email and verification code are required' });
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: 'Account not found' });
+    if (user.isVerified) {
+      setCookie(res, user._id);
+      return res.json({ ok: true, verified: true, name: user.name, age: user.age, email: user.email });
+    }
+    if (user.verificationCode !== code) {
+      return res.status(400).json({ error: 'Invalid verification code. Please check and try again.' });
+    }
+    if (!user.verificationExpires || user.verificationExpires < new Date()) {
+      return res.status(400).json({ error: 'Verification code has expired. Please request a new one.' });
+    }
+
+    user.isVerified = true;
+    user.verificationCode = undefined;
+    user.verificationExpires = undefined;
+    await user.save();
+
+    setCookie(res, user._id);
+    res.json({ ok: true, name: user.name || '', age: user.age, email: user.email });
+  } catch (e) {
+    console.error('Verification error:', e.message);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+app.post('/api/auth/resend-code', authLimiter, async (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  if (!email) return res.status(400).json({ error: 'Email is required' });
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: 'Account not found' });
+    if (user.isVerified) return res.status(400).json({ error: 'Account is already verified. Please log in.' });
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    user.verificationCode = code;
+    user.verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+
+    const emailRes = await sendVerificationEmail(email, user.name, code);
+    res.json({
+      ok: true,
+      message: 'New verification code sent',
+      simulated: !!emailRes.simulated,
+      simulatedCode: emailRes.simulated ? code : undefined
+    });
+  } catch (e) {
+    console.error('Resend code error:', e.message);
+    res.status(500).json({ error: 'Could not send verification email' });
+  }
+});
+
 app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
-    const user = await User.findOne({ email: String(req.body.email || '').trim().toLowerCase() });
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const user = await User.findOne({ email });
     const ok = user && await bcrypt.compare(String(req.body.password || ''), user.passwordHash);
     if (!ok) return res.status(401).json({ error: 'Wrong email or password' });
+
+    // Enforce email verification if account explicitly unverified
+    if (user.isVerified === false) {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      user.verificationCode = code;
+      user.verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+      await user.save();
+      const emailRes = await sendVerificationEmail(user.email, user.name, code);
+      return res.status(403).json({
+        error: 'Please verify your email address to continue',
+        needVerification: true,
+        email: user.email,
+        simulated: !!emailRes.simulated,
+        simulatedCode: emailRes.simulated ? code : undefined
+      });
+    }
+
     setCookie(res, user._id);
     res.json({ ok: true, name: user.name || '', age: user.age, email: user.email });
   } catch (e) {
