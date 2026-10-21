@@ -554,34 +554,6 @@
       40%, 80% { transform: translateX(4px); }
     }
 
-    /* Quick Demo / Test Helper */
-    .demo-bar {
-      margin-top: 22px;
-      padding-top: 18px;
-      border-top: 1px solid var(--bd);
-      text-align: center;
-    }
-    .demo-btn {
-      background: var(--soft);
-      border: 1px dashed var(--bd);
-      color: var(--tx);
-      font-size: 13px;
-      font-weight: 500;
-      padding: 8px 16px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-    }
-    .demo-btn:hover {
-      background: var(--soft-hover);
-      border-style: solid;
-      border-color: var(--ac);
-      color: var(--ac);
-    }
-
     /* Footer info */
     .page-footer {
       text-align: center;
@@ -759,13 +731,6 @@
           <span id="btnLabel">Log in to Habitly</span>
         </button>
       </form>
-
-      <!-- Quick Demo Account Fill -->
-      <div class="demo-bar">
-        <button class="demo-btn" id="demoFillBtn" type="button" title="Autofill demo credentials for testing">
-          <span>✨</span> Try Demo Account
-        </button>
-      </div>
     </section>
 
     <!-- Page Footer -->
@@ -805,7 +770,6 @@
       const pwRequirement = $('pwRequirement');
       const passwordStrength = $('passwordStrength');
       const strengthText = $('strengthText');
-      const demoFillBtn = $('demoFillBtn');
       const themeToggle = $('themeToggle');
       const forgotBtn = $('forgotBtn');
       const forgotDialog = $('forgotDialog');
@@ -948,14 +912,6 @@
           strengthText.style.color = colors[score];
         }
       }
-
-      // Quick Demo Fill
-      demoFillBtn.addEventListener('click', () => {
-        emailInput.value = 'demo@habitly.app';
-        passwordInput.value = 'habitly1234';
-        clearError();
-        emailInput.focus();
-      });
 
       // Dialog controls
       forgotBtn.addEventListener('click', (e) => {

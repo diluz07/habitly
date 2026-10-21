@@ -59,8 +59,18 @@ nav button span{display:block;font-size:20px;letter-spacing:0}nav button.on{colo
 .note{font-size:13px;color:var(--mu);margin-top:8px}
 .toast{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:12px;max-width:90%;z-index:40}
 .v{display:none}.v.show{display:block}
+.app{max-width:480px;margin:0 auto;padding:22px 16px 130px;opacity:0;transition:opacity .25s ease}
+.app.ready{opacity:1}
+nav, .fab{display:none}
+body.ready nav{display:flex}
+body.ready .fab{display:block}
+@keyframes pulse{from{transform:scale(0.95);opacity:0.8}to{transform:scale(1.08);opacity:1}}
 </style></head>
 <body>
+<div id="bootScreen" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);z-index:99;transition:opacity .25s ease">
+  <div style="font-size:48px;animation:pulse 1.2s ease-in-out infinite alternate">🌱</div>
+  <div style="font-family:'Fraunces',Georgia,serif;font-size:22px;margin-top:10px;color:var(--tx)">Habitly</div>
+</div>
 <div class="app">
   <section class="v show" id="v0">
     <div class="eb" id="dow"></div>
@@ -248,12 +258,41 @@ $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
 
 /* account + data */
 $('logout').onclick=async()=>{try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}location.href='/login.html'};
-(async()=>{try{
-  const me=await fetch('/api/me');if(me.status===401){location.href='/login.html';return}
-  const{email}=await me.json();
-  const d=await(await fetch('/api/state')).json();habits=d.habits||[];mood=d.mood||{};
-  ref={set:async st=>{const x=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(st)});if(!x.ok)throw new Error('save');return x}};
-  setSync('☁️ Signed in as '+email+' · synced');render();
-}catch(e){setSync('Server unreachable. Changes are not being saved.')}})();
-render();
+(async()=>{
+  const reveal = () => {
+    document.querySelector('.app').classList.add('ready');
+    document.body.classList.add('ready');
+    const b = $('bootScreen');
+    if (b) {
+      b.style.opacity = '0';
+      setTimeout(() => b.remove(), 260);
+    }
+  };
+
+  try {
+    const me = await fetch('/api/me');
+    if (me.status === 401) {
+      window.location.replace('/login.html');
+      return;
+    }
+    const { email } = await me.json();
+    const d = await (await fetch('/api/state')).json();
+    habits = d.habits || [];
+    mood = d.mood || {};
+    ref = {
+      set: async st => {
+        const x = await fetch('/api/state', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(st) });
+        if (!x.ok) throw new Error('save');
+        return x;
+      }
+    };
+    setSync('☁️ Signed in as ' + email + ' · synced');
+    render();
+    reveal();
+  } catch (e) {
+    setSync('Server unreachable. Changes are not being saved.');
+    render();
+    reveal();
+  }
+})();
 </script></body></html>
