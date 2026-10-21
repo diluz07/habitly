@@ -821,10 +821,11 @@
         setMode('login');
       }
 
-      // Support both direct http://localhost:3000 and file:// or alternative local dev ports
-      const API_BASE = (window.location.protocol === 'http:' && window.location.port === '3000')
-        ? ''
-        : 'http://localhost:3000';
+      // Use relative paths on Vercel / production or localhost:3000; fallback only for file:// or alternate local ports
+      const isFileProtocol = window.location.protocol === 'file:';
+      const isAltLocalPort = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') &&
+        window.location.port && window.location.port !== '3000';
+      const API_BASE = (isFileProtocol || isAltLocalPort) ? 'http://localhost:3000' : '';
 
       // Check if user is already authenticated
       fetch(API_BASE + '/api/me', { credentials: 'include' })
@@ -1045,10 +1046,12 @@
           }
         } catch (err) {
           console.error('Fetch error:', err);
-          if (window.location.protocol === 'file:') {
-            showError('You opened this page directly as a local file (file://). Please navigate to http://localhost:3000/login in your browser.');
+          if (isFileProtocol) {
+            showError('You opened this page directly as a local file (file://). Please open ' + API_BASE + '/login in your browser.');
+          } else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            showError('Unable to connect to local Habitly server. Please ensure "npm start" is running.');
           } else {
-            showError('Unable to connect to Habitly server (' + window.location.origin + '). Please ensure "npm start" is running.');
+            showError('Unable to reach Habitly server. Please check your internet connection or try again.');
           }
         } finally {
           submitBtn.disabled = false;
