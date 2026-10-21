@@ -14,6 +14,8 @@ if (!MONGODB_URI || !JWT_SECRET) { console.error('Set MONGODB_URI and JWT_SECRET
 
 /* ---------- Models ---------- */
 const User = mongoose.model('User', new mongoose.Schema({
+  name: { type: String, trim: true, default: '' },
+  age: { type: Number, min: 1, max: 120 },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true },
 }, { timestamps: true }));
@@ -105,14 +107,27 @@ app.use('/api', async (req, res, next) => {
 
 /* ---------- Auth ---------- */
 app.post('/api/auth/signup', authLimiter, async (req, res) => {
+  const name = String(req.body.name || '').trim();
+  const rawAge = req.body.age !== undefined && req.body.age !== '' ? Number(req.body.age) : undefined;
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
+
+  if (name.length > 80) return res.status(400).json({ error: 'Name must be 80 characters or less' });
+  if (rawAge !== undefined && (isNaN(rawAge) || rawAge < 5 || rawAge > 120)) {
+    return res.status(400).json({ error: 'Please enter a valid age between 5 and 120' });
+  }
   if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ error: 'Enter a valid email' });
   if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
   try {
-    const user = await User.create({ email, passwordHash: await bcrypt.hash(password, 12) });
+    const user = await User.create({
+      name,
+      age: rawAge,
+      email,
+      passwordHash: await bcrypt.hash(password, 12),
+    });
     await State.create({ user: user._id });
-    setCookie(res, user._id); res.json({ ok: true });
+    setCookie(res, user._id);
+    res.json({ ok: true, name: user.name, age: user.age, email: user.email });
   } catch (e) {
     if (e.code === 11000) return res.status(409).json({ error: 'That email is already registered' });
     console.error('Signup error:', e.message);
@@ -124,7 +139,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     const user = await User.findOne({ email: String(req.body.email || '').trim().toLowerCase() });
     const ok = user && await bcrypt.compare(String(req.body.password || ''), user.passwordHash);
     if (!ok) return res.status(401).json({ error: 'Wrong email or password' });
-    setCookie(res, user._id); res.json({ ok: true });
+    setCookie(res, user._id);
+    res.json({ ok: true, name: user.name || '', age: user.age, email: user.email });
   } catch (e) {
     console.error('Login error:', e.message);
     res.status(500).json({ error: 'Database query failed' });
@@ -134,7 +150,7 @@ app.post('/api/auth/logout', (req, res) => { res.clearCookie('token'); res.json(
 app.get('/api/me', auth, async (req, res) => {
   const user = await User.findById(req.uid);
   if (!user) return res.status(401).json({ error: 'Not signed in' });
-  res.json({ email: user.email });
+  res.json({ email: user.email, name: user.name || '', age: user.age });
 });
 
 /* ---------- User data ---------- */

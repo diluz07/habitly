@@ -72,6 +72,10 @@ body.ready .fab{display:block}
   <div style="font-family:'Fraunces',Georgia,serif;font-size:22px;margin-top:10px;color:var(--tx)">Habitly</div>
 </div>
 <div class="app">
+  <div id="trialBanner" style="display:none;background:var(--soft);border:1px solid var(--bd);padding:10px 14px;border-radius:14px;margin-bottom:16px;font-size:13px;align-items:center;justify-content:space-between;gap:8px;">
+    <span>🌱 <b>Guest Preview:</b> Try checking off habits!</span>
+    <a href="/login?mode=signup" style="color:var(--ac);font-weight:600;text-decoration:none;white-space:nowrap;">Create Account &rarr;</a>
+  </div>
   <section class="v show" id="v0">
     <div class="eb" id="dow"></div>
     <div class="date" id="date"></div>
@@ -257,8 +261,16 @@ $('nlBtn').onclick=async()=>{const v=$('nl').value.trim();if(!v||!habits.length)
 $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
 
 /* account + data */
-$('logout').onclick=async()=>{try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}location.href='/login.html'};
+$('logout').onclick=async()=>{
+  sessionStorage.removeItem('habitly_trial_mode');
+  try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}
+  location.href='/login.html';
+};
+
 (async()=>{
+  const urlParams = new URLSearchParams(window.location.search);
+  const isTrial = urlParams.get('trial') === '1' || sessionStorage.getItem('habitly_trial_mode') === 'true';
+
   const reveal = () => {
     document.querySelector('.app').classList.add('ready');
     document.body.classList.add('ready');
@@ -272,10 +284,45 @@ $('logout').onclick=async()=>{try{await fetch('/api/auth/logout',{method:'POST'}
   try {
     const me = await fetch('/api/me');
     if (me.status === 401) {
-      window.location.replace('/login.html');
+      if (!isTrial) {
+        window.location.replace('/login.html');
+        return;
+      }
+      // Guest / Trial Mode without an account
+      sessionStorage.setItem('habitly_trial_mode', 'true');
+      const savedTrial = localStorage.getItem('habitly_trial_state');
+      if (savedTrial) {
+        try {
+          const parsed = JSON.parse(savedTrial);
+          habits = parsed.habits || [];
+          mood = parsed.mood || {};
+        } catch (err) {}
+      }
+      if (!habits.length) {
+        habits = [
+          { id: 1, name: '💧 Drink 2L water', color: '#6fa8d6', dow: [0,1,2,3,4,5,6], days: {}, freeze: {} },
+          { id: 2, name: '📖 Read 15 pages', color: '#c8553d', dow: [0,1,2,3,4,5,6], days: {}, freeze: {} },
+          { id: 3, name: '🧘 10 min mindfulness', color: '#7aa57a', dow: [1,2,3,4,5], days: {}, freeze: {} }
+        ];
+      }
+      ref = {
+        set: async st => {
+          localStorage.setItem('habitly_trial_state', JSON.stringify(st));
+          setSync('✨ Trial Mode · Saved in this browser');
+        }
+      };
+      setSync('✨ Trial Mode · Saved in this browser · [Create free account to sync ☁️]');
+      const tb = $('trialBanner');
+      if (tb) tb.style.display = 'flex';
+      $('logout').textContent = 'Exit Trial & Sign In';
+      render();
+      reveal();
       return;
     }
-    const { email } = await me.json();
+
+    // Authenticated user
+    sessionStorage.removeItem('habitly_trial_mode');
+    const { email, name } = await me.json();
     const d = await (await fetch('/api/state')).json();
     habits = d.habits || [];
     mood = d.mood || {};
@@ -286,13 +333,19 @@ $('logout').onclick=async()=>{try{await fetch('/api/auth/logout',{method:'POST'}
         return x;
       }
     };
-    setSync('☁️ Signed in as ' + email + ' · synced');
+    const displayName = name ? `${name} (${email})` : email;
+    setSync('☁️ Signed in as ' + displayName + ' · synced');
     render();
     reveal();
   } catch (e) {
-    setSync('Server unreachable. Changes are not being saved.');
-    render();
-    reveal();
+    if (isTrial) {
+      render();
+      reveal();
+    } else {
+      setSync('Server unreachable. Changes are not being saved.');
+      render();
+      reveal();
+    }
   }
 })();
 </script></body></html>

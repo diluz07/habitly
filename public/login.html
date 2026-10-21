@@ -258,28 +258,6 @@
       margin: 0 auto 16px;
     }
 
-    /* Feature Pills */
-    .feature-pills {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 22px;
-    }
-    .pill {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--mu);
-      background: var(--card-trans);
-      backdrop-filter: blur(8px);
-      border: 1px solid var(--bd);
-      padding: 4px 10px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
     /* Card Box */
     .card {
       background: var(--card-trans);
@@ -554,6 +532,37 @@
       40%, 80% { transform: translateX(4px); }
     }
 
+    /* Explore Trial Mode Button */
+    .trial-box {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--bd);
+      text-align: center;
+    }
+    .btn-trial {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--soft);
+      border: 1px solid var(--bd);
+      border-radius: 14px;
+      color: var(--tx);
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+    }
+    .btn-trial:hover {
+      background: var(--soft-hover);
+      border-color: var(--ac);
+      color: var(--ac);
+      transform: translateY(-1px);
+    }
+
     /* Footer info */
     .page-footer {
       text-align: center;
@@ -634,12 +643,6 @@
       </div>
       <h1>Habitly <i>Rituals</i></h1>
       <p class="subtitle">Build lasting habits with an intelligent coach that keeps you grounded.</p>
-      
-      <div class="feature-pills" aria-label="Key features">
-        <span class="pill">🔥 Streak Freezes</span>
-        <span class="pill">✦ AI Coach</span>
-        <span class="pill">📊 Visual Heatmap</span>
-      </div>
     </div>
 
     <!-- Login/Register Card -->
@@ -658,6 +661,43 @@
 
       <!-- Auth Form -->
       <form id="authForm" novalidate>
+        <!-- Signup-only fields: Name and Age -->
+        <div class="form-group" id="nameGroup" style="display: none;">
+          <label class="form-label" for="nameInput">
+            <span>Full Name</span>
+          </label>
+          <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </span>
+            <input
+              id="nameInput"
+              type="text"
+              autocomplete="name"
+              placeholder="e.g. Alex Rivera"
+              maxlength="80"
+            >
+          </div>
+        </div>
+
+        <div class="form-group" id="ageGroup" style="display: none;">
+          <label class="form-label" for="ageInput">
+            <span>Age (Optional)</span>
+          </label>
+          <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </span>
+            <input
+              id="ageInput"
+              type="number"
+              min="5"
+              max="120"
+              placeholder="e.g. 24"
+            >
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label" for="emailInput">
             <span>Email Address</span>
@@ -731,6 +771,13 @@
           <span id="btnLabel">Log in to Habitly</span>
         </button>
       </form>
+
+      <!-- Explore Trial Mode -->
+      <div class="trial-box">
+        <button class="btn-trial" id="trialBtn" type="button" title="Try Habitly in guest mode without an account">
+          <span>🌱</span> Explore Habitly First (No Sign-in Needed) →
+        </button>
+      </div>
     </section>
 
     <!-- Page Footer -->
@@ -755,8 +802,13 @@
 
       // Element helpers
       const $ = id => document.getElementById(id);
+      const nameInput = $('nameInput');
+      const ageInput = $('ageInput');
+      const nameGroup = $('nameGroup');
+      const ageGroup = $('ageGroup');
       const emailInput = $('emailInput');
       const passwordInput = $('passwordInput');
+      const trialBtn = $('trialBtn');
       const authForm = $('authForm');
       const submitBtn = $('submitBtn');
       const btnLabel = $('btnLabel');
@@ -828,15 +880,27 @@
       initTheme();
 
       // Mode switching
-      function setMode(mode) {
+      function setMode(mode, clearInputs = false) {
         currentMode = mode;
         clearError();
+
+        if (clearInputs) {
+          nameInput.value = '';
+          ageInput.value = '';
+          emailInput.value = '';
+          passwordInput.value = '';
+          updateStrengthUI(0, 0);
+        }
 
         if (mode === 'signup') {
           tabSignup.classList.add('active');
           tabSignup.setAttribute('aria-selected', 'true');
           tabLogin.classList.remove('active');
           tabLogin.setAttribute('aria-selected', 'false');
+
+          nameGroup.style.display = 'block';
+          ageGroup.style.display = 'block';
+          forgotBtn.style.visibility = 'hidden';
 
           btnLabel.textContent = 'Create Free Account';
           passwordInput.autocomplete = 'new-password';
@@ -849,6 +913,10 @@
           tabSignup.classList.remove('active');
           tabSignup.setAttribute('aria-selected', 'false');
 
+          nameGroup.style.display = 'none';
+          ageGroup.style.display = 'none';
+          forgotBtn.style.visibility = 'visible';
+
           btnLabel.textContent = 'Log in to Habitly';
           passwordInput.autocomplete = 'current-password';
           pwRequirement.style.display = 'none';
@@ -857,8 +925,14 @@
         }
       }
 
-      tabLogin.addEventListener('click', () => setMode('login'));
-      tabSignup.addEventListener('click', () => setMode('signup'));
+      tabLogin.addEventListener('click', () => setMode('login', true));
+      tabSignup.addEventListener('click', () => setMode('signup', true));
+
+      // Try Habitly Without an Account
+      trialBtn.addEventListener('click', () => {
+        sessionStorage.setItem('habitly_trial_mode', 'true');
+        window.location.href = '/?trial=1';
+      });
 
       // Toggle password visibility
       let showPassword = false;
@@ -968,6 +1042,30 @@
           return;
         }
 
+        const payload = { email, password };
+
+        if (currentMode === 'signup') {
+          const name = nameInput.value.trim();
+          const age = ageInput.value.trim();
+          if (name) {
+            if (name.length > 80) {
+              showError('Name must be 80 characters or less.');
+              nameInput.focus();
+              return;
+            }
+            payload.name = name;
+          }
+          if (age) {
+            const ageNum = Number(age);
+            if (isNaN(ageNum) || ageNum < 5 || ageNum > 120) {
+              showError('Please enter a valid age between 5 and 120.');
+              ageInput.focus();
+              return;
+            }
+            payload.age = ageNum;
+          }
+        }
+
         // Set Loading State
         submitBtn.disabled = true;
         btnSpinner.style.display = 'inline-block';
@@ -979,7 +1077,7 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify(payload)
           });
 
           const data = await res.json().catch(() => ({}));
