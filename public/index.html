@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Habitly</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Fraunces:ital,wght@0,400;1,400&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6efe2;--card:#fdfaf3;--tx:#2a211d;--mu:#8c8176;--ac:#c8553d;--bd:#e8dfcd;--soft:#efe6d6}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1713;--card:#262019;--tx:#f1e9dc;--mu:#a1958a;--ac:#e0735a;--bd:#3a3128;--soft:#30281f}}
+:root[data-theme="dark"]{--bg:#1c1713;--card:#262019;--tx:#f1e9dc;--mu:#a1958a;--ac:#e0735a;--bd:#3a3128;--soft:#30281f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 "DM Sans",system-ui,-apple-system,sans-serif}
+button,input{font:inherit;color:inherit}
+.app{max-width:480px;margin:0 auto;padding:22px 16px 130px}
+.eb{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mu)}
+.date{font:400 44px/1.1 Fraunces,Georgia,serif;margin:6px 0 14px}.date i{color:var(--ac)}
+.pr{display:flex;justify-content:space-between;color:var(--mu);margin-bottom:6px}.pr b{color:var(--tx);font-weight:500}
+.bar{height:6px;background:var(--bd);border-radius:9px;overflow:hidden;margin-bottom:24px}.bar i{display:block;height:100%;background:var(--ac);border-radius:9px;transition:width .4s}
+.gh{display:flex;justify-content:space-between;margin:0 6px 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:24px;margin-bottom:22px;overflow:hidden}
+.pad{padding:16px}
+.row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid var(--bd)}.row:first-child{border-top:0}
+.row.off{opacity:.45}
+.ck{width:34px;height:34px;border-radius:50%;border:2px solid var(--bd);background:transparent;flex:none;cursor:pointer;color:#fff;font-size:16px;padding:0}
+.ck.on{background:var(--c);border-color:var(--c)}
+.mid{flex:1;min-width:0;cursor:pointer}.nm{font-size:17px;font-weight:500}.nm.dn{text-decoration:line-through;color:var(--mu)}.sub{font-size:13px;color:var(--mu)}
+.badge{background:var(--soft);border-radius:99px;padding:3px 10px;font-size:14px;white-space:nowrap}.badge.z{color:var(--mu)}
+.ring{width:32px;height:32px;flex:none}
+.empty{color:var(--mu);text-align:center;padding:22px}
+h3{font:400 22px Fraunces,Georgia,serif;margin:0 0 12px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav>div{display:flex;width:100%;max-width:480px}
+nav button{flex:1;background:none;border:0;padding:10px 0 12px;color:var(--mu);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+nav button span{display:block;font-size:20px;letter-spacing:0}nav button.on{color:var(--tx)}
+.fab{position:fixed;right:max(18px,calc(50% - 222px));bottom:calc(78px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--tx);color:var(--bg);font-size:30px;cursor:pointer;z-index:6;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;justify-content:center;z-index:30}.ov.show{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));max-height:90%;overflow-y:auto}
+.sh{display:flex;justify-content:space-between;margin-bottom:6px}.lk{background:none;border:0;color:var(--ac);font-weight:600;cursor:pointer;padding:6px 0}
+.in{width:100%;padding:14px;border-radius:14px;border:1px solid var(--bd);background:var(--card);margin:6px 0}
+.cols{display:flex;justify-content:space-between;padding:14px;background:var(--card);border-radius:14px;margin:6px 0}
+.cd{width:30px;height:30px;border-radius:50%;border:3px solid transparent;cursor:pointer;background:var(--c)}.cd.sel{border-color:var(--tx)}
+.days{display:flex;gap:4px;background:var(--card);border-radius:14px;padding:6px;margin:6px 0}
+.days button{flex:1;padding:9px 0;border-radius:9px;border:0;background:none;color:var(--ac);font-weight:600;cursor:pointer}.days button.on{background:var(--ac);color:#fff}
+.opt{display:block;width:100%;text-align:left;padding:14px;margin:6px 0;border-radius:14px;border:1px solid var(--bd);background:var(--card);cursor:pointer}
+.btn{padding:11px 16px;border-radius:12px;border:0;background:var(--ac);color:#fff;font-weight:600;cursor:pointer}.btn.alt{background:var(--soft);color:var(--tx)}.btn:disabled{opacity:.5}
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px}.hc{aspect-ratio:1;border-radius:3px;background:var(--soft)}
+.calh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.calh button{background:none;border:0;font-size:22px;cursor:pointer}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;row-gap:4px}.cal .w{font-size:12px;color:var(--mu);padding:4px 0}
+.cl{padding:6px 0;border-radius:12px;cursor:pointer;min-height:46px}.cl.sel{background:var(--soft)}.cl.td{outline:1px solid var(--ac)}
+.dts{display:flex;gap:2px;justify-content:center;height:6px;margin-top:2px}.dts i{width:5px;height:5px;border-radius:50%}
+.mb{font-size:24px;background:none;border:2px solid transparent;border-radius:12px;cursor:pointer;padding:3px 6px;opacity:.5}.mb.sel{opacity:1;border-color:var(--ac);background:var(--soft)}
+.mr{display:flex;align-items:center;gap:8px;margin:6px 0}.mr>span{width:56px;color:var(--mu);font-size:13px}
+.xp{height:8px;border-radius:9px;background:var(--bd);overflow:hidden}.xp i{display:block;height:100%;background:var(--ac)}
+.garden{display:flex;flex-wrap:wrap;gap:6px;font-size:32px;margin-top:10px}
+.hb{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}.hb i{display:block;height:10px;border-radius:9px;background:var(--ac)}
+.chat{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.msg{padding:9px 12px;border-radius:14px;max-width:88%;white-space:pre-wrap}.me{align-self:flex-end;background:var(--ac);color:#fff}.ai{align-self:flex-start;background:var(--soft)}
+.r{display:flex;gap:8px;margin:6px 0}.r .in{margin:0}
+.note{font-size:13px;color:var(--mu);margin-top:8px}
+.toast{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:12px;max-width:90%;z-index:40}
+.v{display:none}.v.show{display:block}
+</style></head>
+<body>
+<div class="app">
+  <section class="v show" id="v0">
+    <div class="eb" id="dow"></div>
+    <div class="date" id="date"></div>
+    <div class="pr"><span id="ptxt"></span><b id="ppct"></b></div>
+    <div class="bar"><i id="pbar" style="width:0"></i></div>
+    <div class="gh eb"><span>Today</span><span id="n1"></span></div>
+    <div class="card" id="list1"></div>
+    <button class="btn alt" id="add2" style="width:100%;margin:-8px 0 22px">+ Add habit</button>
+    <div id="offw"><div class="gh eb"><span>Not today</span><span id="n2"></span></div><div class="card" id="list2"></div></div>
+    <div class="gh eb"><span>Mood &amp; energy</span></div>
+    <div class="card pad"><div class="mr"><span>Mood</span><div id="moodB"></div></div><div class="mr"><span>Energy</span><div id="enB"></div></div></div>
+  </section>
+
+  <section class="v" id="v1">
+    <h3>Stats</h3>
+    <div class="card pad"><div class="eb" id="lvl"></div><div class="xp" style="margin-top:8px"><i id="xpb"></i></div><div class="garden" id="garden"></div></div>
+    <div class="gh eb"><span>Task activity</span></div>
+    <div class="card pad"><div class="heat" id="heat"></div></div>
+    <div class="gh eb"><span>Mood trend</span></div>
+    <div class="card pad"><div id="mbars"></div><div class="note" id="insight"></div></div>
+  </section>
+
+  <section class="v" id="v2">
+    <div class="card pad"><div class="calh"><button id="pm" aria-label="Previous month">‹</button><b id="mt"></b><button id="nm2" aria-label="Next month">›</button></div><div class="cal" id="cal"></div></div>
+    <div class="gh eb"><span id="seld"></span></div>
+    <div class="card" id="dlist"></div>
+    <button class="btn alt" id="add3" style="width:100%">+ Add habit</button>
+  </section>
+
+  <section class="v" id="v3">
+    <h3>AI coach ✨</h3>
+    <div class="card pad">
+      <div class="r"><input class="in" id="nl" placeholder="Log in words: “ran 3km and meditated”"><button class="btn alt" id="nlBtn">Log</button></div>
+      <div class="r"><button class="btn alt" id="review">Weekly review</button><button class="btn alt" id="suggest">Suggest a habit</button></div>
+      <div class="chat" id="chat"></div>
+      <div class="r"><input class="in" id="q" placeholder="Ask your coach…"><button class="btn" id="send">Send</button></div>
+      <div class="note" id="aiNote"></div>
+    </div>
+    <div class="card pad"><div class="note" id="syncNote" style="margin:0 0 10px">Saved in this browser.</div><button class="btn alt" id="notif">🔔 Enable notifications</button> <button class="btn alt" id="logout">Log out</button></div>
+  </section>
+</div>
+
+<button class="fab" id="fab" aria-label="Add habit">+</button>
+<nav><div id="nav"></div></nav>
+<div class="ov" id="ov"><div class="sheet" id="sh"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const key=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const ago=n=>{const d=new Date();d.setDate(d.getDate()-n);return key(d)};
+const today=()=>ago(0);
+const PAL=['#c8553d','#a38fd6','#6fa8d6','#7aa57a','#e0a458','#d6708a','#b08968','#4fa3a0'];
+const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],ORD=[1,2,3,4,5,6,0],LB=['M','T','W','T','F','S','S'];
+let habits=[],mood={},ref=null,syncT=null,tab=0,sel=today(),mo=0;
+const setSync=t=>$('syncNote').textContent=t;
+const save=()=>{if(ref){clearTimeout(syncT);syncT=setTimeout(()=>{ref.set({habits,mood,t:Date.now()}).then(()=>setSync('☁️ Synced to your account')).catch(()=>setSync('Sync failed – saved in this browser'))},600)}};
+const col=h=>h.color||PAL[Math.max(0,habits.indexOf(h))%PAL.length];
+const sched=(h,d)=>!h.dow||h.dow.includes(new Date(d+'T12:00:00').getDay());
+const dlabel=h=>{const w=h.dow;if(!w||w.length===7)return'Daily';const s=[...w].sort().join();if(s==='1,2,3,4,5')return'Weekdays';if(s==='0,6')return'Weekends';return ORD.filter(x=>w.includes(x)).map(x=>DN[x]).join(' · ')};
+function streak(h){const f=h.freeze||{};let n=0,i=(h.days[today()]||f[today()])?0:1;while(i<400){const d=ago(i);if(h.days[d])n++;else if(!f[d]&&sched(h,d))break;i++}return n}
+function wk(h){let c=0,t=0;for(let i=0;i<7;i++){const d=ago(i);if(sched(h,d)){t++;if(h.days[d])c++}}return[c,t]}
+function ring(c,t,k){const L=75.4,p=t?c/t:0;return'<svg class="ring" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="var(--bd)" stroke-width="3"/><circle cx="16" cy="16" r="12" fill="none" stroke="'+k+'" stroke-width="3" stroke-linecap="round" stroke-dasharray="'+(L*p)+' '+L+'" transform="rotate(-90 16 16)"/><text x="16" y="19" text-anchor="middle" font-size="9" fill="var(--tx)">'+c+'/'+t+'</text></svg>'}
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',4500)}
+const tog=(h,d)=>{h.days[d]?delete h.days[d]:h.days[d]=1;save();render()};
+
+/* sheets */
+function openSheet(html){$('sh').innerHTML=html;$('ov').classList.add('show')}
+function closeSheet(){$('ov').classList.remove('show')}
+$('ov').onclick=e=>{if(e.target.id==='ov')closeSheet()};
+function newHabit(eh){
+  let c=eh?col(eh):PAL[habits.length%PAL.length],dw=eh&&eh.dow?[...eh.dow]:[0,1,2,3,4,5,6];
+  openSheet('<div class="sh"><button class="lk" id="cx">Cancel</button><button class="lk" id="sv">Save</button></div><h3 style="font-size:30px">'+(eh?'Edit habit':'Add new habit')+'</h3>'+
+    '<input class="in" id="hn" placeholder="e.g. Read Books" maxlength="60"><div class="cols" id="cs"></div>'+
+    '<div class="eb" style="margin-top:14px">In which days of week?</div><div class="days" id="ds"></div><button class="opt" id="ev" style="text-align:center;color:var(--ac)">Every day</button>'+
+    '<div class="eb" style="margin-top:14px">Reminder time (optional)</div>'+TP);
+  const paint=()=>{$('cs').innerHTML=PAL.map(p=>'<button class="cd'+(p===c?' sel':'')+'" style="--c:'+p+'" data-c="'+p+'" aria-label="Colour"></button>').join('');
+    $('ds').innerHTML=ORD.map((x,i)=>'<button class="'+(dw.includes(x)?'on':'')+'" data-d="'+x+'">'+LB[i]+'</button>').join('');
+    $('cs').querySelectorAll('button').forEach(b=>b.onclick=()=>{c=b.dataset.c;paint()});
+    $('ds').querySelectorAll('button').forEach(b=>b.onclick=()=>{const x=+b.dataset.d;dw=dw.includes(x)?dw.filter(y=>y!==x):[...dw,x];paint()})};
+  if(eh){$('hn').value=eh.name;$('ht').value=eh.time||''}presets();paint();$('ev').onclick=()=>{dw=[0,1,2,3,4,5,6];paint()};$('cx').onclick=closeSheet;
+  $('sv').onclick=()=>{const n=$('hn').value.trim();if(!n){toast('Give your habit a name');return}if(!dw.length){toast('Pick at least one day');return}
+    if(eh){eh.name=n;eh.color=c;eh.dow=dw;eh.time=$('ht').value||undefined}else habits.push({id:Date.now()+Math.random(),name:n,color:c,dow:dw,days:{},freeze:{},time:$('ht').value||undefined});save();closeSheet();render()};
+}
+const PR=[['🌅 Morning','07:00'],['☀️ Noon','12:00'],['🌤 Afternoon','15:00'],['🌙 Evening','19:00'],['😴 Night','21:30']];
+const TP='<div class="days" id="pt" style="flex-wrap:wrap"></div><div class="r"><input class="in" type="time" id="ht"><button class="btn alt" id="pc" type="button">No reminder</button></div>';
+function presets(){const pp=()=>{$('pt').innerHTML=PR.map(([l,v])=>'<button type="button" class="'+($('ht').value===v?'on':'')+'" data-v="'+v+'" style="flex:1 1 30%">'+l+'<br><small>'+v+'</small></button>').join('');$('pt').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('ht').value=b.dataset.v;pp()})};$('ht').oninput=pp;$('pc').onclick=()=>{$('ht').value='';pp()};pp()}
+function remSheet(h){openSheet('<div class="sh"><button class="lk" id="cx">Cancel</button><button class="lk" id="sv">Save</button></div><h3>Reminder</h3><div class="note" style="margin:0 0 8px">'+esc(h.name)+' · pick a time or choose your own</div>'+TP);$('ht').value=h.time||'';presets();$('cx').onclick=closeSheet;$('sv').onclick=()=>{h.time=$('ht').value||undefined;save();closeSheet();render();toast(h.time?'⏰ Reminder set for '+h.time:'Reminder removed')}}
+const FREEZE_MAX=2;
+function freezesUsed(){const p=today().slice(0,7);let n=0;habits.forEach(h=>Object.keys(h.freeze||{}).forEach(d=>{if(d.startsWith(p))n++}));return n}
+function actions(h){
+  openSheet('<h3>'+esc(h.name)+'</h3><button class="opt" id="a0">✏️ Edit habit (name, colour, days)</button><button class="opt" id="a1">❄️ Freeze today ('+(FREEZE_MAX-freezesUsed())+' left this month)</button><button class="opt" id="a2">⏰ '+(h.time?'Change reminder ('+h.time+')':'Set reminder')+'</button><button class="opt" id="a3">🗑 Delete habit</button>');
+  $('a0').onclick=()=>newHabit(h);
+  $('a1').onclick=()=>{const t=today();h.freeze=h.freeze||{};if(h.freeze[t]){delete h.freeze[t];toast('Freeze removed')}else if(h.days[t]){toast('Already done today')}else if(freezesUsed()>=FREEZE_MAX){toast('No freeze days left this month');return}else{h.freeze[t]=1;toast('❄️ Frozen. Your streak is safe today.')}save();closeSheet();render()};
+  $('a2').onclick=()=>remSheet(h);
+  $('a3').onclick=()=>{const a=$('a3');if(!a.dataset.s){a.dataset.s=1;a.textContent='⚠️ Tap again to delete this habit';return}habits=habits.filter(x=>x!==h);save();closeSheet();render()};
+}
+
+/* render */
+function rowHtml(h,off){const k=col(h),t=today(),s=streak(h),[c,tt]=wk(h);
+  return'<div class="row'+(off?' off':'')+'"><button class="ck'+(h.days[t]?' on':'')+'" style="--c:'+k+'" aria-label="Check in">'+(h.days[t]?'✓':'')+'</button><div class="mid"><div class="nm'+(h.days[t]?' dn':'')+'">'+esc(h.name)+'</div><div class="sub">'+dlabel(h)+(h.time?' · '+h.time:'')+((h.freeze&&h.freeze[t])?' · ❄️ frozen':'')+'</div></div>'+
+  (off?'':'<span class="badge'+(s?'':' z')+'">🔥 '+s+'</span>'+ring(c,tt,k))+'</div>'}
+function bindRows(box,list,off){[...box.children].forEach((el,i)=>{if(!list[i])return;const h=list[i];el.querySelector('.mid').onclick=()=>actions(h);el.querySelector('.ck').onclick=()=>{if(off)return;tog(h,today())}})}
+const xp=()=>habits.reduce((a,h)=>a+Object.keys(h.days).length*10,0)+Object.keys(mood).length*5;
+const stage=s=>s>=30?'🌸':s>=14?'🌳':s>=7?'🪴':s>=3?'🌿':'🌱';
+const FACES=['😞','😕','😐','🙂','😄'],ENG=['😴','🥱','😐','⚡','🔥'];
+function pick(id,arr,f){const b=$(id);b.innerHTML='';const cur=(mood[today()]||{})[f];arr.forEach((e,i)=>{const x=document.createElement('button');x.className='mb'+(cur===i+1?' sel':'');x.textContent=e;x.setAttribute('aria-label',f+' '+(i+1));x.onclick=()=>{mood[today()]=Object.assign({},mood[today()],{[f]:i+1});save();render()};b.appendChild(x)})}
+function render(){
+  const n=new Date(),t=today();
+  $('dow').textContent=n.toLocaleDateString(undefined,{weekday:'long'});
+  $('date').innerHTML=n.toLocaleDateString(undefined,{month:'long'})+' <i>'+n.getDate()+'</i>';
+  const on=habits.filter(h=>sched(h,t)),off=habits.filter(h=>!sched(h,t)),dn=on.filter(h=>h.days[t]).length,pc=on.length?Math.round(dn/on.length*100):0;
+  $('ptxt').textContent=dn+' of '+on.length+' today';$('ppct').textContent=pc+' %';$('pbar').style.width=pc+'%';$('n1').textContent=on.length;$('n2').textContent=off.length;
+  $('list1').innerHTML=on.length?on.map(h=>rowHtml(h,0)).join(''):'<div class="empty">'+(habits.length?'Nothing scheduled today 🌿':'Tap + to add your first habit 🌱')+'</div>';
+  if(on.length)bindRows($('list1'),on,0);
+  $('offw').style.display=off.length?'block':'none';$('list2').innerHTML=off.map(h=>rowHtml(h,1)).join('');bindRows($('list2'),off,1);
+  pick('moodB',FACES,'m');pick('enB',ENG,'e');
+  /* stats */
+  const x=xp();$('lvl').textContent='Level '+(Math.floor(x/100)+1)+' · '+x+' XP';$('xpb').style.width=(x%100)+'%';
+  const G=$('garden');G.innerHTML='';habits.forEach(h=>{const s=document.createElement('span');s.textContent=stage(streak(h));s.title=h.name+' · '+streak(h)+' day streak';G.appendChild(s)});
+  const dw=(n.getDay()+6)%7,H=$('heat');H.innerHTML='';
+  for(let k=0;k<119;k++){const o=dw+112-k,c=document.createElement('div');c.className='hc';if(o<0){c.style.visibility='hidden'}else{const d=ago(o),sc=habits.filter(h=>sched(h,d)),f=sc.length?sc.filter(h=>h.days[d]).length/sc.length:0;if(f)c.style.background='color-mix(in srgb,var(--ac) '+Math.round(25+f*75)+'%,var(--soft))'}H.appendChild(c)}
+  const cnt=[0,0,0,0,0],mx=Object.keys(mood).filter(d=>mood[d].m);mx.forEach(d=>cnt[mood[d].m-1]++);const m=Math.max(1,...cnt);
+  $('mbars').innerHTML=cnt.map((v,i)=>'<div class="hb"><span>'+FACES[i]+'</span><i style="width:'+(v/m*60)+'%"></i><span>'+v+'</span></div>').join('');
+  let txt;const days=mx.filter(()=>habits.length);
+  if(days.length<5)txt='Log your mood on 5+ days to unlock insights ('+days.length+'/5).';
+  else{const rt=d=>{const sc=habits.filter(h=>sched(h,d));return sc.length?sc.filter(h=>h.days[d]).length/sc.length:0},av=a=>a.reduce((s,d)=>s+rt(d),0)/a.length,hi=days.filter(d=>mood[d].m>=4),lo=days.filter(d=>mood[d].m<=3);
+    txt=(hi.length&&lo.length)?'💡 On days you feel good (4–5) you complete '+Math.round(av(hi)*100)+'% of habits, vs '+Math.round(av(lo)*100)+'% on other days.':'Not enough variety in your mood logs yet to compare days.'}
+  $('insight').textContent=txt;
+  /* calendar */
+  const b=new Date(n.getFullYear(),n.getMonth()+mo,1),first=(b.getDay()+6)%7,dim=new Date(b.getFullYear(),b.getMonth()+1,0).getDate();
+  $('mt').textContent=b.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  let ch=LB.map(l=>'<div class="w">'+l+'</div>').join('')+'<div></div>'.repeat(first);
+  for(let d=1;d<=dim;d++){const k=key(new Date(b.getFullYear(),b.getMonth(),d,12)),dots=habits.filter(h=>h.days[k]).slice(0,4).map(h=>'<i style="background:'+col(h)+'"></i>').join('');
+    ch+='<div class="cl'+(k===sel?' sel':'')+(k===t?' td':'')+'" data-k="'+k+'">'+d+'<div class="dts">'+dots+'</div></div>'}
+  $('cal').innerHTML=ch;$('cal').querySelectorAll('.cl').forEach(e=>e.onclick=()=>{sel=e.dataset.k;render()});
+  $('seld').textContent=new Date(sel+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+' · tap a habit to mark it done';
+  const sl=habits.filter(h=>sched(h,sel));
+  $('dlist').innerHTML=sl.length?sl.map(h=>'<div class="row"><button class="ck'+(h.days[sel]?' on':'')+'" style="--c:'+col(h)+'">'+(h.days[sel]?'✓':'')+'</button><div class="mid"><div class="nm'+(h.days[sel]?' dn':'')+'">'+esc(h.name)+'</div></div><button class="lk" data-e="1" aria-label="Edit habit">✏️</button></div>').join(''):'<div class="empty">No habits scheduled this day</div>';
+  [...$('dlist').children].forEach((el,i)=>{const h=sl[i];if(!h)return;el.querySelector('[data-e]').onclick=e=>{e.stopPropagation();actions(h)};el.style.cursor='pointer';el.onclick=()=>{if(sel>t){toast('You can’t check in for a future day yet');return}tog(h,sel)}});
+}
+$('pm').onclick=()=>{mo--;render()};$('nm2').onclick=()=>{mo++;render()};
+$('fab').onclick=()=>newHabit();$('add2').onclick=()=>newHabit();$('add3').onclick=()=>newHabit();
+['Today|⌂','Stats|◔','Calendar|▦','Coach|✦'].forEach((s,i)=>{const[l,ic]=s.split('|'),b=document.createElement('button');b.innerHTML='<span>'+ic+'</span>'+l;b.onclick=()=>{tab=i;document.querySelectorAll('.v').forEach((v,j)=>v.classList.toggle('show',j===i));[...$('nav').children].forEach((x,j)=>x.classList.toggle('on',j===i));$('fab').style.display=i===0?'block':'none'};$('nav').appendChild(b)});
+$('nav').children[0].classList.add('on');
+
+/* reminders */
+const fired={};
+setInterval(()=>{const n=new Date(),hm=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  habits.forEach(h=>{const k=h.id+today();if(h.time===hm&&sched(h,today())&&!h.days[today()]&&!fired[k]){fired[k]=1;toast('⏰ Time for: '+h.name);try{if(window.Notification&&Notification.permission==='granted')new Notification('Habitly',{body:h.name})}catch(e){}}})},20000);
+$('notif').onclick=async()=>{try{const p=await Notification.requestPermission();toast(p==='granted'?'Notifications on while this page is open':'Blocked. In-page reminders still work.')}catch(e){toast('Browser notifications aren’t available here. In-page reminders still work.')}};
+
+/* AI */
+let history=[];
+async function sample(input,opts={}){
+  const messages=typeof input==='string'?[{role:'user',content:input}]:input;
+  const res=await fetch('/api/ai/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});
+  if(res.status===401){location.href='/login.html';throw new Error('auth')}
+  if(!res.ok)throw new Error('ai '+res.status);
+  const{text}=await res.json();if(opts.onText)opts.onText({text});return{text};
+}
+sample.json=async prompt=>{const{text}=await sample(prompt);const m=text.match(/\[[\s\d,]*\]/);if(m){try{return JSON.parse(m[0])}catch(e){}}
+  try{const v=JSON.parse(text.slice(text.indexOf('{'),text.lastIndexOf('}')+1));return Object.values(v).find(Array.isArray)||[]}catch(e){return[]}};
+$('aiNote').textContent='The coach runs through your server.';
+const summary=()=>JSON.stringify({today:today(),recentMood:Object.entries(mood).slice(-7),habits:habits.map(h=>({name:h.name,schedule:dlabel(h),streak:streak(h),doneLast7:wk(h)[0],of:wk(h)[1],doneToday:!!h.days[today()],last14:Array.from({length:14},(_,i)=>h.days[ago(13-i)]?1:0).join('')}))});
+function say(t,c){const m=document.createElement('div');m.className='msg '+c;m.textContent=t;$('chat').appendChild(m);$('chat').scrollTop=1e9;return m}
+async function ask(p,u){
+  
+  if(u)say(u,'me');const m=say('Thinking…','ai');
+  const ctx='You are a warm, concise habit coach (max 120 words, no markdown). Be specific, kind, practical; suggest tiny steps. User data: '+summary()+'\n';
+  try{const r=await sample([...history,{role:'user',content:ctx+p}],{cache:false,onText:({text})=>{m.textContent=text}});m.textContent=r.text;history.push({role:'user',content:p},{role:'assistant',content:r.text});history=history.slice(-8)}
+  catch(e){m.textContent='The coach is busy or today’s free AI limit was reached. Try again in a bit.'}
+}
+$('send').onclick=()=>{const v=$('q').value.trim();if(!v)return;$('q').value='';ask(v,v)};$('q').onkeydown=e=>{if(e.key==='Enter')$('send').click()};
+$('review').onclick=()=>ask('Write my weekly review: one win, one struggle, one suggestion for next week.','Weekly review please');
+$('suggest').onclick=()=>ask('Suggest one new tiny habit with a habit-stacking cue (“after I…, I will…”).','Suggest a habit');
+$('nlBtn').onclick=async()=>{const v=$('nl').value.trim();if(!v||!habits.length)return;$('nlBtn').disabled=true;
+  try{const ids=await sample.json('Habits: '+JSON.stringify(habits.map((h,i)=>({i,name:h.name})))+'\nThe user said: "'+v+'"\nReturn ONLY a JSON array of habit indexes (numbers) the user says they completed.');
+    const hit=(Array.isArray(ids)?ids:[]).filter(i=>habits[i]);hit.forEach(i=>habits[i].days[today()]=1);save();render();
+    say(hit.length?'Logged: '+hit.map(i=>habits[i].name).join(', ')+' ✓':'I couldn’t match that to your habits.','ai');$('nl').value=''}
+  catch(e){say('Couldn’t log that right now.','ai')}$('nlBtn').disabled=false};
+$('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
+
+/* account + data */
+$('logout').onclick=async()=>{try{await fetch('/api/auth/logout',{method:'POST'})}catch(e){}location.href='/login.html'};
+(async()=>{try{
+  const me=await fetch('/api/me');if(me.status===401){location.href='/login.html';return}
+  const{email}=await me.json();
+  const d=await(await fetch('/api/state')).json();habits=d.habits||[];mood=d.mood||{};
+  ref={set:async st=>{const x=await fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(st)});if(!x.ok)throw new Error('save');return x}};
+  setSync('☁️ Signed in as '+email+' · synced');render();
+}catch(e){setSync('Server unreachable. Changes are not being saved.')}})();
+render();
+</script></body></html>
