@@ -11,6 +11,7 @@ const rateLimit = require('express-rate-limit');
 const { Resend } = require('resend');
 
 const { MONGODB_URI, JWT_SECRET, GROQ_API_KEY, RESEND_API_KEY, EMAIL_FROM,
+  BREVO_API_KEY, BREVO_SENDER_EMAIL = 'dildilu077@gmail.com', BREVO_SENDER_NAME = 'Habitly',
   GROQ_MODEL = 'qwen/qwen3.8-27b', PORT = 3000 } = process.env;
 if (!MONGODB_URI || !JWT_SECRET) { console.error('Set MONGODB_URI and JWT_SECRET in .env'); process.exit(1); }
 
@@ -29,15 +30,76 @@ const User = mongoose.model('User', new mongoose.Schema({
   lastReminderSentDate: { type: String },
 }, { timestamps: true }));
 
-async function sendVerificationEmail(email, name, code) {
-  if (!resend) {
-    console.log('\n======================================================');
-    console.log(`[Resend Sim] Verification code for ${email}: ${code}`);
-    console.log('To send live emails, set RESEND_API_KEY in .env and Vercel');
-    console.log('======================================================\n');
-    return { ok: true, simulated: true };
+/**
+ * Universal email sender: Prioritizes Brevo (supports sending to ANY address with verified sender)
+ * with automatic fallback to Resend or local console simulation.
+ */
+async function sendEmail({ to, toName = '', subject, htmlContent }) {
+  // 1. Try Brevo (Primary - No domain verification restriction, 300 free emails/day)
+  if (BREVO_API_KEY) {
+    try {
+      const senderEmail = BREVO_SENDER_EMAIL || 'dildilu077@gmail.com';
+      const senderName = BREVO_SENDER_NAME || 'Habitly';
+      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'api-key': BREVO_API_KEY,
+          'accept': 'application/json',
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: senderEmail },
+          to: [{ email: to, name: toName || to }],
+          subject,
+          htmlContent
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.messageId) {
+        return { ok: true, provider: 'brevo', messageId: data.messageId };
+      }
+      console.warn('Brevo API error:', data.message || data);
+    } catch (e) {
+      console.warn('Brevo exception, trying fallback:', e.message);
+    }
   }
-  const from = EMAIL_FROM || 'Habitly <verify@dilshad.runs-on.dev>';
+
+  // 2. Try Resend (Secondary / Fallback)
+  if (resend) {
+    try {
+      const from = EMAIL_FROM || 'Habitly <verify@dilshad.runs-on.dev>';
+      let result = await resend.emails.send({
+        from,
+        to,
+        subject,
+        html: htmlContent
+      });
+      if (result.error && result.error.message && result.error.message.includes('not verified') && from !== 'Habitly <onboarding@resend.dev>') {
+        result = await resend.emails.send({
+          from: 'Habitly <onboarding@resend.dev>',
+          to,
+          subject,
+          html: htmlContent
+        });
+      }
+      if (!result.error) {
+        return { ok: true, provider: 'resend', data: result.data };
+      }
+      console.warn('Resend error:', result.error);
+    } catch (e) {
+      console.warn('Resend exception:', e.message);
+    }
+  }
+
+  // 3. Fallback: Log to console in local/test mode
+  console.log('\n======================================================');
+  console.log(`[Email Simulation] To: ${to} | Subject: ${subject}`);
+  console.log('To send live emails, set BREVO_API_KEY or RESEND_API_KEY in .env and Vercel');
+  console.log('======================================================\n');
+  return { ok: true, simulated: true };
+}
+
+async function sendVerificationEmail(email, name, code) {
   const greeting = name ? `Hi ${name},` : 'Hello,';
   const emailHtml = `
     <!DOCTYPE html>
@@ -63,33 +125,12 @@ async function sendVerificationEmail(email, name, code) {
     </html>
   `;
 
-  try {
-    let result = await resend.emails.send({
-      from,
-      to: email,
-      subject: `${code} is your Habitly verification code`,
-      html: emailHtml,
-    });
-
-    // If custom domain is not yet verified on Resend, automatically fallback to onboarding@resend.dev
-    if (result.error && result.error.message && result.error.message.includes('not verified') && from !== 'Habitly <onboarding@resend.dev>') {
-      result = await resend.emails.send({
-        from: 'Habitly <onboarding@resend.dev>',
-        to: email,
-        subject: `${code} is your Habitly verification code`,
-        html: emailHtml,
-      });
-    }
-
-    if (result.error) {
-      console.error('Resend error:', result.error);
-      return { ok: false, error: result.error.message };
-    }
-    return { ok: true, data: result.data };
-  } catch (err) {
-    console.error('Resend exception:', err.message);
-    return { ok: false, error: err.message };
-  }
+  return await sendEmail({
+    to: email,
+    toName: name,
+    subject: `${code} is your Habitly verification code`,
+    htmlContent: emailHtml
+  });
 }
 
 function escapeHtml(str) {
@@ -99,13 +140,6 @@ function escapeHtml(str) {
 }
 
 async function sendHabitReminderEmail(email, name, habits = []) {
-  if (!resend) {
-    console.log('\n======================================================');
-    console.log(`[Resend Sim] Habit reminder for ${email}`);
-    console.log('======================================================\n');
-    return { ok: true, simulated: true, pendingCount: 0, completedCount: 0 };
-  }
-
   const now = new Date();
   const yyyy = now.getFullYear();
   const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -211,32 +245,17 @@ async function sendHabitReminderEmail(email, name, habits = []) {
     ? `🌱 ${pending.length} habit${pending.length === 1 ? '' : 's'} waiting for you today`
     : `🌱 Great job! Your habits for today are all checked off`;
 
-  try {
-    let result = await resend.emails.send({
-      from,
-      to: email,
-      subject,
-      html: emailHtml,
-    });
-
-    if (result.error && result.error.message && result.error.message.includes('not verified') && from !== 'Habitly <onboarding@resend.dev>') {
-      result = await resend.emails.send({
-        from: 'Habitly <onboarding@resend.dev>',
-        to: email,
-        subject,
-        html: emailHtml,
-      });
-    }
-
-    if (result.error) {
-      console.error('Resend reminder error:', result.error);
-      return { ok: false, error: result.error.message, pendingCount: pending.length, completedCount: completed.length };
-    }
-    return { ok: true, data: result.data, pendingCount: pending.length, completedCount: completed.length };
-  } catch (err) {
-    console.error('Resend reminder exception:', err.message);
-    return { ok: false, error: err.message, pendingCount: pending.length, completedCount: completed.length };
-  }
+  const emailRes = await sendEmail({
+    to: email,
+    toName: name,
+    subject,
+    htmlContent: emailHtml
+  });
+  return {
+    ...emailRes,
+    pendingCount: pending.length,
+    completedCount: completed.length
+  };
 }
 
 // One document per user holds their habits and mood logs (matches the app's data shape).
