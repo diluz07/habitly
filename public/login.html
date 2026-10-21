@@ -1152,7 +1152,7 @@
 
           if (res.ok && data.ok) {
             if (data.needVerification) {
-              openVerificationScreen(data.email, data.simulatedCode);
+              openVerificationScreen(data.email, data.simulatedCode, data.emailError);
               return;
             }
             btnLabel.textContent = 'Success! Redirecting…';
@@ -1162,8 +1162,8 @@
 
           // If unverified account login attempt
           if (data && data.needVerification) {
-            openVerificationScreen(data.email, data.simulatedCode);
-            showError('Please enter the 6-digit verification code sent to your email.');
+            openVerificationScreen(data.email, data.simulatedCode, data.emailError);
+            showError(data.emailError ? ('Resend: ' + data.emailError) : 'Please enter the 6-digit verification code sent to your email.');
             return;
           }
 
@@ -1212,7 +1212,7 @@
       let resendCooldown = 0;
       let resendTimer = null;
 
-      function openVerificationScreen(email, simCode) {
+      function openVerificationScreen(email, simCode, emailError) {
         pendingEmail = email;
         clearError();
         authForm.style.display = 'none';
@@ -1221,6 +1221,10 @@
         verifyCard.style.display = 'block';
         verifyEmailTarget.textContent = email;
         otpInput.value = '';
+
+        if (emailError) {
+          showError('Resend note: ' + emailError);
+        }
 
         if (simCode) {
           simulatedCodeNotice.style.display = 'block';

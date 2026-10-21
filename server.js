@@ -35,42 +35,55 @@ async function sendVerificationEmail(email, name, code) {
     console.log('======================================================\n');
     return { ok: true, simulated: true };
   }
-  const from = EMAIL_FROM || 'Habitly <onboarding@resend.dev>';
+  const from = EMAIL_FROM || 'Habitly <verify@dilshad.runs-on.dev>';
   const greeting = name ? `Hi ${name},` : 'Hello,';
+  const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#f6efe2;margin:0;padding:32px 16px;color:#2a211d">
+      <div style="max-width:480px;margin:0 auto;background:#fdfaf3;border:1px solid #e8dfcd;border-radius:22px;padding:32px 24px;box-shadow:0 8px 30px rgba(42,33,29,0.06)">
+        <div style="font-size:38px;text-align:center;margin-bottom:12px">🌱</div>
+        <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:600;text-align:center;margin:0 0 8px;color:#2a211d">Verify your email</h1>
+        <p style="font-size:14.5px;color:#7a6f64;text-align:center;line-height:1.5;margin:0 0 24px">
+          ${greeting} Welcome to Habitly! Enter the 6-digit verification code below to activate your account and start tracking your habits.
+        </p>
+        <div style="background:#efe6d6;border-radius:14px;padding:18px 0;text-align:center;margin:20px 0">
+          <span style="font-family:monospace,'DM Sans',sans-serif;font-size:34px;font-weight:700;letter-spacing:8px;color:#c8553d">
+            ${code}
+          </span>
+        </div>
+        <p style="font-size:12.5px;color:#9b8e82;text-align:center;margin:20px 0 0;line-height:1.4">
+          This verification code expires in 15 minutes.<br>If you didn't create a Habitly account, you can safely ignore this email.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
   try {
-    const { data, error } = await resend.emails.send({
+    let result = await resend.emails.send({
       from,
       to: email,
       subject: `${code} is your Habitly verification code`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head><meta charset="utf-8"></head>
-        <body style="font-family:'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;background:#f6efe2;margin:0;padding:32px 16px;color:#2a211d">
-          <div style="max-width:480px;margin:0 auto;background:#fdfaf3;border:1px solid #e8dfcd;border-radius:22px;padding:32px 24px;box-shadow:0 8px 30px rgba(42,33,29,0.06)">
-            <div style="font-size:38px;text-align:center;margin-bottom:12px">🌱</div>
-            <h1 style="font-family:Georgia,serif;font-size:24px;font-weight:600;text-align:center;margin:0 0 8px;color:#2a211d">Verify your email</h1>
-            <p style="font-size:14.5px;color:#7a6f64;text-align:center;line-height:1.5;margin:0 0 24px">
-              ${greeting} Welcome to Habitly! Enter the 6-digit verification code below to activate your account and start tracking your habits.
-            </p>
-            <div style="background:#efe6d6;border-radius:14px;padding:18px 0;text-align:center;margin:20px 0">
-              <span style="font-family:monospace,'DM Sans',sans-serif;font-size:34px;font-weight:700;letter-spacing:8px;color:#c8553d">
-                ${code}
-              </span>
-            </div>
-            <p style="font-size:12.5px;color:#9b8e82;text-align:center;margin:20px 0 0;line-height:1.4">
-              This verification code expires in 15 minutes.<br>If you didn't create a Habitly account, you can safely ignore this email.
-            </p>
-          </div>
-        </body>
-        </html>
-      `,
+      html: emailHtml,
     });
-    if (error) {
-      console.error('Resend error:', error);
-      return { ok: false, error: error.message };
+
+    // If custom domain is not yet verified on Resend, automatically fallback to onboarding@resend.dev
+    if (result.error && result.error.message && result.error.message.includes('not verified') && from !== 'Habitly <onboarding@resend.dev>') {
+      result = await resend.emails.send({
+        from: 'Habitly <onboarding@resend.dev>',
+        to: email,
+        subject: `${code} is your Habitly verification code`,
+        html: emailHtml,
+      });
     }
-    return { ok: true, data };
+
+    if (result.error) {
+      console.error('Resend error:', result.error);
+      return { ok: false, error: result.error.message };
+    }
+    return { ok: true, data: result.data };
   } catch (err) {
     console.error('Resend exception:', err.message);
     return { ok: false, error: err.message };
@@ -211,8 +224,9 @@ app.post('/api/auth/signup', authLimiter, async (req, res) => {
       ok: true,
       needVerification: true,
       email: user.email,
-      simulated: !!emailRes.simulated,
-      simulatedCode: emailRes.simulated ? code : undefined
+      simulated: !!emailRes.simulated || !emailRes.ok,
+      simulatedCode: (emailRes.simulated || !emailRes.ok) ? code : undefined,
+      emailError: emailRes.error
     });
   } catch (e) {
     if (e.code === 11000) return res.status(409).json({ error: 'That email is already registered' });
@@ -272,8 +286,9 @@ app.post('/api/auth/resend-code', authLimiter, async (req, res) => {
     res.json({
       ok: true,
       message: 'New verification code sent',
-      simulated: !!emailRes.simulated,
-      simulatedCode: emailRes.simulated ? code : undefined
+      simulated: !!emailRes.simulated || !emailRes.ok,
+      simulatedCode: (emailRes.simulated || !emailRes.ok) ? code : undefined,
+      emailError: emailRes.error
     });
   } catch (e) {
     console.error('Resend code error:', e.message);
@@ -299,8 +314,9 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
         error: 'Please verify your email address to continue',
         needVerification: true,
         email: user.email,
-        simulated: !!emailRes.simulated,
-        simulatedCode: emailRes.simulated ? code : undefined
+        simulated: !!emailRes.simulated || !emailRes.ok,
+        simulatedCode: (emailRes.simulated || !emailRes.ok) ? code : undefined,
+        emailError: emailRes.error
       });
     }
 
