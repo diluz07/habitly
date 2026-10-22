@@ -161,11 +161,6 @@ body.ready .fab{display:block}
           <b id="valXp" style="color:var(--tx);font-weight:600;font-size:14px">0 XP</b>
         </div>
       </div>
-      <div style="padding-top:12px;border-top:1px solid var(--bd);margin-top:2px">
-        <button class="btn alt" id="editProfileBtn2" style="width:100%;font-size:13px;padding:9px;display:flex;align-items:center;justify-content:center;gap:6px">
-          <span>✏️</span><span>Edit Name &amp; Age</span>
-        </button>
-      </div>
     </div>
 
     <div class="gh eb"><span>Preferences &amp; Cloud</span></div>
@@ -461,7 +456,6 @@ $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
   };
 
   if ($('editProfileBtn')) $('editProfileBtn').onclick = openEditProfileModal;
-  if ($('editProfileBtn2')) $('editProfileBtn2').onclick = openEditProfileModal;
 
   const reveal = () => {
     document.querySelector('.app').classList.add('ready');
