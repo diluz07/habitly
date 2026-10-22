@@ -998,12 +998,92 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .garden-wrap {
+    /* Refined Botanical Herbarium (Stats Screen) */
+    .botanical-card {
+      position: relative;
+    }
+    .botanical-header {
       display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
       flex-wrap: wrap;
-      gap: 8px;
-      font-size: 26px;
-      margin-top: 8px;
+    }
+    .botanical-divider {
+      border-top: 1px dashed var(--bdr);
+      margin: 14px 0 16px;
+      width: 100%;
+    }
+    .botanical-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 480px) {
+      .botanical-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+    }
+    .botanical-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 14px 8px 12px;
+      border-radius: 14px;
+      background: rgba(246, 239, 226, 0.45);
+      border: 1px solid rgba(27, 22, 17, 0.05);
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    [data-theme="dark"] .botanical-item {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(246, 239, 226, 0.06);
+    }
+    .botanical-item:hover {
+      transform: translateY(-2px);
+    }
+    .botanical-svg-wrap {
+      width: 76px;
+      height: 84px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .botanical-svg-wrap svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .botanical-name {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--tx);
+      line-height: 1.25;
+      margin-bottom: 3px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 4px;
+    }
+    .botanical-meta {
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-size: 11.5px;
+      color: var(--mu);
+      line-height: 1.2;
+    }
+    .botanical-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 24px 12px;
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      color: var(--mu);
+      font-size: 14px;
     }
     .note {
       font-size: 12.5px;
@@ -1225,11 +1305,19 @@
         </div>
       </div>
 
-      <!-- Streak Garden -->
-      <div class="card pad">
-        <span class="eb">Habit Garden</span>
-        <h3 style="font-family:'Fraunces',Georgia,serif;font-size:19px;font-weight:400;margin:3px 0 3px">Streak Botanical Growth</h3>
-        <div class="garden-wrap" id="garden"></div>
+      <!-- Botanical Herbarium Specimen Card -->
+      <div class="card pad botanical-card">
+        <div class="botanical-header">
+          <div>
+            <span class="eb">Botanical Herbarium</span>
+            <h3 style="font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:400;margin:3px 0 2px">Botanical Growth</h3>
+          </div>
+          <span style="font-family:'Newsreader',Georgia,serif;font-style:italic;font-size:12.5px;color:var(--mu)">
+            Plate I · Growth by Daily Practice
+          </span>
+        </div>
+        <div class="botanical-divider"></div>
+        <div class="botanical-grid" id="garden"></div>
       </div>
 
       <!-- Mentor's Reflection Callout (With fully displayed mood labels) -->
@@ -1686,7 +1774,79 @@
     }
 
     const xp = () => habits.reduce((a, h) => a + Object.keys(h.days).length * 10, 0) + Object.keys(mood).length * 5;
-    const stage = s => s >= 30 ? '🌸' : s >= 14 ? '🌳' : s >= 7 ? '🪴' : s >= 3 ? '🌿' : '🌱';
+    // Refined Botanical Growth Herbarium (5 Stages)
+    function getBotanicalStage(s) {
+      if (s >= 30) return { stage: 'Flower in Bloom', code: 5 };
+      if (s >= 14) return { stage: 'Small Tree', code: 4 };
+      if (s >= 7) return { stage: 'Growing Plant', code: 3 };
+      if (s >= 3) return { stage: 'Sprout', code: 2 };
+      return { stage: 'Seedling', code: 1 };
+    }
+
+    function renderBotanicalPlantSvg(stageCode, habitColor) {
+      // Clean flat vector plants in small terracotta pots, sage-green leaves, thin clean shapes
+      // No outlines, no gradients, no cartoon faces
+      const pot = '<path d="M26 66 L29.5 82 Q30 84 32 84 L48 84 Q50 84 50.5 82 L54 66 Z" fill="#C4694D"/>' +
+                  '<rect x="24" y="62.5" width="32" height="4" rx="1.2" fill="#B3593D"/>' +
+                  '<ellipse cx="40" cy="63" rx="13.5" ry="1.6" fill="#4A3629"/>';
+      
+      let flora = '';
+      if (stageCode === 1) {
+        // Stage 1: Seedling - two tiny delicate sage-green oval leaves emerging from slender stem
+        flora = '<path d="M39.3 63 Q39.4 53 40 46 Q40.6 53 40.7 63 Z" fill="#6A8A6C"/>' +
+                '<path d="M40 48 C32 46 27 39 30 34 C34 35 38 41 40 48 Z" fill="#88A88A"/>' +
+                '<path d="M40 48 C48 46 53 39 50 34 C46 35 42 41 40 48 Z" fill="#759677"/>';
+      } else if (stageCode === 2) {
+        // Stage 2: Sprout - slender stem with 4 delicate sage leaves arching outward
+        flora = '<path d="M39.3 63 Q39.3 47 40 33 Q40.7 47 40.7 63 Z" fill="#638365"/>' +
+                '<path d="M39.6 51 C28 50 22 42 25 36 C30 38 35 44 39.6 51 Z" fill="#7A9C7C"/>' +
+                '<path d="M40.4 49 C52 48 58 40 55 34 C50 36 45 42 40.4 49 Z" fill="#6B8D6D"/>' +
+                '<path d="M40 35 C33 32 30 23 33 20 C37 21 40 27 40 35 Z" fill="#8EAFA0"/>' +
+                '<path d="M40 35 C47 32 50 23 47 20 C43 21 40 27 40 35 Z" fill="#7FA081"/>';
+      } else if (stageCode === 3) {
+        // Stage 3: Growing plant - multiple layered sage-green fronds
+        flora = '<path d="M39.2 63 Q39.4 43 40 26 Q40.6 43 40.8 63 Z" fill="#5A7A5C"/>' +
+                '<path d="M39.6 53 C24 54 18 45 22 39 C27 41 33 47 39.6 53 Z" fill="#688A6A"/>' +
+                '<path d="M40.4 51 C56 52 62 43 58 37 C53 39 47 45 40.4 51 Z" fill="#5D7F5F"/>' +
+                '<path d="M39.6 41 C26 39 21 29 26 24 C30 26 35 33 39.6 41 Z" fill="#7C9E7E"/>' +
+                '<path d="M40.4 39 C54 37 59 27 54 22 C50 24 45 31 40.4 39 Z" fill="#709272"/>' +
+                '<path d="M40 27 C34 22 31 13 36 10 C39 12 40 19 40 27 Z" fill="#8DAF8F"/>' +
+                '<path d="M40 27 C46 22 49 13 44 10 C41 12 40 19 40 27 Z" fill="#7EA080"/>';
+      } else if (stageCode === 4) {
+        // Stage 4: Small tree - slender woody trunk & canopy of distinct sage leaves
+        flora = '<path d="M38.8 63 L39.2 38 L40.8 38 L41.2 63 Z" fill="#6F5848"/>' +
+                '<path d="M39.4 42 Q31 35 27 30 L28.4 29 Q33 34 40 40 Z" fill="#6F5848"/>' +
+                '<path d="M40.6 41 Q49 34 53 28 L54.4 29 Q49.5 36 40 41 Z" fill="#6F5848"/>' +
+                '<ellipse cx="25" cy="26" rx="9" ry="6" transform="rotate(-20 25 26)" fill="#688A6A"/>' +
+                '<ellipse cx="28" cy="22" rx="7.5" ry="5" transform="rotate(-5 28 22)" fill="#7E9F80"/>' +
+                '<ellipse cx="23" cy="28" rx="6" ry="4" transform="rotate(-30 23 28)" fill="#5C7E5E"/>' +
+                '<ellipse cx="55" cy="24" rx="9" ry="6" transform="rotate(20 55 24)" fill="#5C7E5E"/>' +
+                '<ellipse cx="52" cy="20" rx="7.5" ry="5" transform="rotate(5 52 20)" fill="#709272"/>' +
+                '<ellipse cx="57" cy="26" rx="6" ry="4" transform="rotate(30 57 26)" fill="#668868"/>' +
+                '<ellipse cx="40" cy="18" rx="12" ry="8" fill="#688A6A"/>' +
+                '<ellipse cx="40" cy="14" rx="9.5" ry="6" fill="#7E9F80"/>' +
+                '<ellipse cx="40" cy="10" rx="6.5" ry="4.5" fill="#8EAF90"/>';
+      } else {
+        // Stage 5: Flower in bloom - sage leaves + open flower whose petals use habit color
+        const petalCol = habitColor || 'var(--ac)';
+        flora = '<path d="M39.2 63 Q39.4 46 40 30 Q40.6 46 40.8 63 Z" fill="#5A7A5C"/>' +
+                '<path d="M39.5 52 C25 52 19 44 23 38 C28 40 33 46 39.5 52 Z" fill="#688A6A"/>' +
+                '<path d="M40.5 50 C55 50 61 42 57 36 C52 38 47 44 40.5 50 Z" fill="#5D7F5F"/>' +
+                '<path d="M39.6 40 C30 38 26 29 30 25 C34 27 37 33 39.6 40 Z" fill="#7C9E7E"/>' +
+                '<path d="M40.4 38 C50 36 54 27 50 23 C46 25 43 31 40.4 38 Z" fill="#709272"/>' +
+                '<g transform="translate(40, 18)">' +
+                  '<ellipse cx="0" cy="-7.5" rx="4" ry="6.5" fill="' + petalCol + '"/>' +
+                  '<ellipse cx="7.1" cy="-2.3" rx="4" ry="6.5" transform="rotate(72 7.1 -2.3)" fill="' + petalCol + '"/>' +
+                  '<ellipse cx="4.4" cy="6.1" rx="4" ry="6.5" transform="rotate(144 4.4 6.1)" fill="' + petalCol + '"/>' +
+                  '<ellipse cx="-4.4" cy="6.1" rx="4" ry="6.5" transform="rotate(216 -4.4 6.1)" fill="' + petalCol + '"/>' +
+                  '<ellipse cx="-7.1" cy="-2.3" rx="4" ry="6.5" transform="rotate(288 -7.1 -2.3)" fill="' + petalCol + '"/>' +
+                  '<circle cx="0" cy="0" r="3.2" fill="#E6BE5A"/>' +
+                  '<circle cx="0" cy="0" r="1.5" fill="#C49330"/>' +
+                '</g>';
+      }
+
+      return '<svg viewBox="0 0 80 88" xmlns="http://www.w3.org/2000/svg">' + pot + flora + '</svg>';
+    }
     
     // Fully displayed labels for reflective states
     const MOOD_DATA = [
@@ -1834,15 +1994,28 @@
         }
       }
 
-      // Garden Botanical Growth
+      // Refined Botanical Herbarium Specimens
       const G = $('garden');
       G.innerHTML = '';
-      habits.forEach(h => {
-        const s = document.createElement('span');
-        s.textContent = stage(streak(h));
-        s.title = h.name + ' · ' + streak(h) + ' day streak';
-        G.appendChild(s);
-      });
+      if (!habits.length) {
+        G.innerHTML = '<div class="botanical-empty">No habits planted yet. Cultivate habits to grow your botanical specimens.</div>';
+      } else {
+        habits.forEach(h => {
+          const st = streak(h);
+          const stInfo = getBotanicalStage(st);
+          const habitColor = h.color || 'var(--ac)';
+          const dayLabel = st + (st === 1 ? ' day' : ' days');
+          const plantSvg = renderBotanicalPlantSvg(stInfo.code, habitColor);
+
+          const item = document.createElement('div');
+          item.className = 'botanical-item';
+          item.innerHTML = 
+            '<div class="botanical-svg-wrap">' + plantSvg + '</div>' +
+            '<div class="botanical-name" title="' + esc(h.name) + '">' + esc(h.name) + '</div>' +
+            '<div class="botanical-meta">' + stInfo.stage + ' · ' + dayLabel + '</div>';
+          G.appendChild(item);
+        });
+      }
 
       // 17-Week Cadence Matrix (Activity Heatmap)
       const dw = (n.getDay() + 6) % 7, H = $('heat');
