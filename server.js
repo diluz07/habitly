@@ -660,26 +660,17 @@ app.post('/api/ai/chat', auth, aiLimiter, async (req, res) => {
         let text = msg && (msg.content || msg.reasoning);
 
         if (text && text.trim()) {
-          return res.json({
-            text: text.trim(),
-            modelUsed: model,
-            switchedModel: (switchedFrom && switchedFrom !== model) ? model : null,
-            previousModel: (switchedFrom && switchedFrom !== model) ? switchedFrom : null
-          });
+          return res.json({ text: text.trim() });
         }
 
         console.warn(`Groq model ${model} returned empty content, switching to next model...`);
-        if (!switchedFrom) switchedFrom = model;
       } catch (err) {
         console.warn(`Groq model ${model} network error:`, err.message);
-        if (!switchedFrom) switchedFrom = model;
         lastError = err.message;
       }
     }
 
-    return res.status(502).json({
-      error: lastError ? `All AI models busy (${lastError}). Please try again in a bit.` : 'All AI models are temporarily busy. Please try again in a moment.'
-    });
+    return res.status(502).json({ error: 'The coach is temporarily busy. Please try again in a bit.' });
   } catch (e) {
     console.error('AI chat exception:', e);
     res.status(502).json({ error: 'AI unavailable' });

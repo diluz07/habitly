@@ -107,19 +107,7 @@ body.ready .fab{display:block}
   </section>
 
   <section class="v" id="v3">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <h3 style="margin:0">AI coach ✨</h3>
-      <div style="display:flex;align-items:center;gap:6px">
-        <label for="aiModelSelect" style="font-size:12px;color:var(--mu);font-weight:500">Model:</label>
-        <select id="aiModelSelect" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);outline:none;cursor:pointer">
-          <option value="auto">⚡ Auto (Smart Failover)</option>
-          <option value="qwen/qwen3.8-27b">Qwen 27B</option>
-          <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
-          <option value="openai/gpt-oss-20b">GPT-OSS 20B</option>
-          <option value="allam-2-7b">Allam 7B</option>
-        </select>
-      </div>
-    </div>
+    <h3>AI coach ✨</h3>
     <div class="card pad">
       <div class="r"><input class="in" id="nl" type="text" name="habit_quick_log" autocomplete="off" autocorrect="on" spellcheck="true" data-lpignore="true" data-form-type="other" placeholder="Quick log: “ran 3km and meditated”"><button class="btn alt" id="nlBtn">Log</button></div>
       <div class="r" style="display:flex;justify-content:space-between;align-items:center">
@@ -352,26 +340,8 @@ setInterval(()=>{const n=new Date(),hm=String(n.getHours()).padStart(2,'0')+':'+
   habits.forEach(h=>{const k=h.id+today();if(h.time===hm&&sched(h,today())&&!h.days[today()]&&!fired[k]){fired[k]=1;toast('⏰ Time for: '+h.name);try{if(window.Notification&&Notification.permission==='granted')new Notification('Habitly',{body:h.name})}catch(e){}}})},20000);
 $('notif').onclick=async()=>{try{const p=await Notification.requestPermission();toast(p==='granted'?'Notifications on while this page is open':'Blocked. In-page reminders still work.')}catch(e){toast('Browser notifications aren’t available here. In-page reminders still work.')}};
 
-/* AI with multi-model failover */
+/* AI with automatic behind-the-scenes multi-model failover */
 let history=[];
-const MODEL_NAMES = {
-  'auto': 'Auto (Smart Failover)',
-  'qwen/qwen3.8-27b': 'Qwen 27B',
-  'openai/gpt-oss-120b': 'GPT-OSS 120B',
-  'openai/gpt-oss-20b': 'GPT-OSS 20B',
-  'allam-2-7b': 'Allam 7B'
-};
-
-const savedModel = localStorage.getItem('habitly_ai_model') || 'auto';
-if ($('aiModelSelect')) {
-  $('aiModelSelect').value = savedModel;
-  $('aiModelSelect').onchange = () => {
-    localStorage.setItem('habitly_ai_model', $('aiModelSelect').value);
-    const label = MODEL_NAMES[$('aiModelSelect').value] || $('aiModelSelect').value;
-    $('aiNote').textContent = `Preferred model set to ${label}. Will auto-failover if limits are reached.`;
-    toast(`Model: ${label}`);
-  };
-}
 
 if ($('clearChatBtn')) {
   $('clearChatBtn').onclick = () => {
@@ -383,33 +353,21 @@ if ($('clearChatBtn')) {
 
 async function sample(input,opts={}){
   const messages=typeof input==='string'?[{role:'user',content:input}]:input;
-  const chosenModel = $('aiModelSelect') ? $('aiModelSelect').value : 'auto';
   const res=await fetch('/api/ai/chat',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({messages, model: chosenModel})
+    body:JSON.stringify({messages})
   });
   if(res.status===401){location.href='/login.html';throw new Error('auth')}
   const data=await res.json().catch(()=>({}));
   if(!res.ok)throw new Error(data.error||('ai '+res.status));
   const text=data.text||'';
-
-  if ($('aiNote') && data.modelUsed) {
-    const curName = MODEL_NAMES[data.modelUsed] || data.modelUsed;
-    if (data.switchedModel && data.previousModel) {
-      const prevName = MODEL_NAMES[data.previousModel] || data.previousModel;
-      $('aiNote').innerHTML = `<span style="color:var(--ac);font-weight:600">⚡ Auto-switched to ${curName}</span> (quota limit reached on ${prevName})`;
-    } else {
-      $('aiNote').textContent = `✨ Powered by ${curName} · Multi-model failover active`;
-    }
-  }
-
   if(opts.onText)opts.onText({text});
-  return{text, modelUsed: data.modelUsed};
+  return{text};
 }
 sample.json=async prompt=>{const{text}=await sample(prompt);const m=text.match(/\[[\s\d,]*\]/);if(m){try{return JSON.parse(m[0])}catch(e){}}
   try{const v=JSON.parse(text.slice(text.indexOf('{'),text.lastIndexOf('}')+1));return Object.values(v).find(Array.isArray)||[]}catch(e){return[]}};
-$('aiNote').textContent='⚡ Auto-failover active across 4 AI models (Qwen, GPT-OSS 120B, GPT-OSS 20B, Allam).';
+$('aiNote').textContent='The coach runs through your server.';
 const summary=()=>JSON.stringify({today:today(),recentMood:Object.entries(mood).slice(-7),habits:habits.map(h=>({name:h.name,schedule:dlabel(h),streak:streak(h),doneLast7:wk(h)[0],of:wk(h)[1],doneToday:!!h.days[today()],last14:Array.from({length:14},(_,i)=>h.days[ago(13-i)]?1:0).join('')}))});
 function say(t,c){const m=document.createElement('div');m.className='msg '+c;m.textContent=t;$('chat').appendChild(m);$('chat').scrollTop=1e9;return m}
 async function ask(p,u){
@@ -419,7 +377,7 @@ async function ask(p,u){
     const r=await sample([...history,{role:'user',content:ctx+p}],{cache:false,onText:({text})=>{m.textContent=text}});
     m.textContent=r.text;history.push({role:'user',content:p},{role:'assistant',content:r.text});history=history.slice(-8);
   } catch(e){
-    m.textContent=e.message&&!e.message.startsWith('ai ')?e.message:'The coach models are temporarily busy. Try selecting another model above or retry in a few moments.';
+    m.textContent=e.message&&!e.message.startsWith('ai ')?e.message:'The coach is temporarily busy. Please try again in a bit.';
   }
 }
 $('send').onclick=()=>{const v=$('q').value.trim();if(!v)return;$('q').value='';ask(v,v)};$('q').onkeydown=e=>{if(e.key==='Enter')$('send').click()};
@@ -429,7 +387,7 @@ $('nlBtn').onclick=async()=>{const v=$('nl').value.trim();if(!v||!habits.length)
   try{const ids=await sample.json('Habits: '+JSON.stringify(habits.map((h,i)=>({i,name:h.name})))+'\nThe user said: "'+v+'"\nReturn ONLY a JSON array of habit indexes (numbers) the user says they completed.');
     const hit=(Array.isArray(ids)?ids:[]).filter(i=>habits[i]);hit.forEach(i=>habits[i].days[today()]=1);save();render();
     say(hit.length?'Logged: '+hit.map(i=>habits[i].name).join(', ')+' ✓':'I couldn’t match that to your habits.','ai');$('nl').value=''}
-  catch(e){say('Couldn’t log that right now. Try switching the model above.','ai')}$('nlBtn').disabled=false};
+  catch(e){say('Couldn’t log that right now. Please try again in a moment.','ai')}$('nlBtn').disabled=false};
 $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
 
 /* account + data */
