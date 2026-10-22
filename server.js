@@ -311,7 +311,14 @@ const auth = (req, res, next) => {
   catch { res.status(401).json({ error: 'Not signed in' }); }
 };
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
-const aiLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 40, keyGenerator: (req) => String(req.uid) });
+const aiLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => String(req.uid),
+  message: { error: 'You have reached the hourly coach limit. Please take a short breather and try again in a bit.' }
+});
 
 let cachedPromise = null;
 async function connectDb() {
@@ -600,33 +607,79 @@ app.all('/api/cron/reminders', async (req, res) => {
   }
 });
 
-/* ---------- AI coach (Groq, key stays on the server) ---------- */
+/* ---------- AI coach (Groq with automatic multi-model failover) ---------- */
+const GROQ_FALLBACK_MODELS = [
+  'qwen/qwen3.8-27b',
+  'openai/gpt-oss-120b',
+  'openai/gpt-oss-20b',
+  'allam-2-7b'
+];
+
 app.post('/api/ai/chat', auth, aiLimiter, async (req, res) => {
-  const { messages } = req.body;
+  const { messages, model: userRequestedModel } = req.body;
   if (!GROQ_API_KEY) return res.status(503).json({ error: 'AI not configured' });
   if (!Array.isArray(messages) || !messages.length || messages.length > 12 ||
       messages.some(m => typeof m.content !== 'string' || m.content.length > 8000 || !['user', 'assistant', 'system'].includes(m.role)))
     return res.status(400).json({ error: 'Invalid messages' });
   try {
-    const modelsToTry = Array.from(new Set([GROQ_MODEL, 'qwen/qwen3.8-27b', 'allam-2-7b', 'openai/gpt-oss-120b'].filter(Boolean)));
+    const primaryModel = (userRequestedModel && userRequestedModel !== 'auto')
+      ? userRequestedModel
+      : (GROQ_MODEL || 'qwen/qwen3.8-27b');
+
+    // Prioritize selected/primary model, then systematically fallback through all available models
+    const modelsToTry = Array.from(new Set([primaryModel, ...GROQ_FALLBACK_MODELS].filter(Boolean)));
     let lastError = null;
-    for (const model of modelsToTry) {
-      const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + GROQ_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, messages, max_tokens: 600, temperature: 0.6 }),
-      });
-      const j = await r.json();
-      if (r.status === 429) return res.status(429).json({ error: 'AI limit reached, try again later' });
-      const msg = j.choices && j.choices[0] && j.choices[0].message;
-      const text = msg && (msg.content || msg.reasoning);
-      if (text && text.trim()) {
-        return res.json({ text: text.trim() });
+    let switchedFrom = null;
+
+    for (let i = 0; i < modelsToTry.length; i++) {
+      const model = modelsToTry[i];
+      try {
+        const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + GROQ_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model,
+            messages,
+            max_tokens: 800,
+            temperature: 0.6
+          }),
+        });
+
+        const j = await r.json().catch(() => ({}));
+
+        // If rate limit (429), model quota exceeded, or upstream failure, DO NOT abort! Fall back to next model!
+        if (r.status === 429 || !r.ok) {
+          const detail = (j.error && j.error.message) || `HTTP ${r.status}`;
+          console.warn(`Groq model ${model} limit/error (${r.status}): ${detail}. Switching to next model...`);
+          if (!switchedFrom) switchedFrom = model;
+          lastError = detail;
+          continue; // Try next model in sequence
+        }
+
+        const msg = j.choices && j.choices[0] && j.choices[0].message;
+        let text = msg && (msg.content || msg.reasoning);
+
+        if (text && text.trim()) {
+          return res.json({
+            text: text.trim(),
+            modelUsed: model,
+            switchedModel: (switchedFrom && switchedFrom !== model) ? model : null,
+            previousModel: (switchedFrom && switchedFrom !== model) ? switchedFrom : null
+          });
+        }
+
+        console.warn(`Groq model ${model} returned empty content, switching to next model...`);
+        if (!switchedFrom) switchedFrom = model;
+      } catch (err) {
+        console.warn(`Groq model ${model} network error:`, err.message);
+        if (!switchedFrom) switchedFrom = model;
+        lastError = err.message;
       }
-      lastError = j.error && j.error.message;
-      console.warn(`Groq model ${model} failed:`, lastError);
     }
-    return res.status(502).json({ error: lastError || 'AI unavailable' });
+
+    return res.status(502).json({
+      error: lastError ? `All AI models busy (${lastError}). Please try again in a bit.` : 'All AI models are temporarily busy. Please try again in a moment.'
+    });
   } catch (e) {
     console.error('AI chat exception:', e);
     res.status(502).json({ error: 'AI unavailable' });
