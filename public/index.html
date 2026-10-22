@@ -135,7 +135,10 @@ body.ready .fab{display:block}
         </div>
       </div>
 
-      <div class="gh eb" style="margin:16px 0 8px"><span>Account Information</span></div>
+      <div class="gh eb" style="margin:16px 0 8px;display:flex;justify-content:space-between;align-items:center">
+        <span>Account Information</span>
+        <button id="editProfileBtn" class="lk" style="font-size:13px;font-weight:600;color:var(--ac);background:none;border:0;cursor:pointer;padding:0">✏️ Edit</button>
+      </div>
       <div style="border-top:1px solid var(--bd)">
         <div class="row" style="padding:11px 0;justify-content:space-between;border-top:0">
           <span style="color:var(--mu);font-size:13px">Full Name</span>
@@ -157,6 +160,11 @@ body.ready .fab{display:block}
           <span style="color:var(--mu);font-size:13px">Total Experience</span>
           <b id="valXp" style="color:var(--tx);font-weight:600;font-size:14px">0 XP</b>
         </div>
+      </div>
+      <div style="padding-top:12px;border-top:1px solid var(--bd);margin-top:2px">
+        <button class="btn alt" id="editProfileBtn2" style="width:100%;font-size:13px;padding:9px;display:flex;align-items:center;justify-content:center;gap:6px">
+          <span>✏️</span><span>Edit Name &amp; Age</span>
+        </button>
       </div>
     </div>
 
@@ -371,6 +379,90 @@ $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
   const urlParams = new URLSearchParams(window.location.search);
   const isTrial = urlParams.get('trial') === '1' || sessionStorage.getItem('habitly_trial_mode') === 'true';
 
+  let userProfile = { name: '', age: undefined, email: '' };
+
+  const updateProfileDisplay = () => {
+    const name = userProfile.name || '';
+    const age = userProfile.age;
+    const email = userProfile.email || '';
+    const initial = (name && name.trim()) ? name.trim()[0].toUpperCase() : (email && email.includes('@') ? email[0].toUpperCase() : '🌱');
+    if ($('profAvatar')) $('profAvatar').textContent = initial;
+    if ($('profDisplayName')) $('profDisplayName').textContent = name || (email && email.includes('@') ? email.split('@')[0] : 'Guest Explorer');
+    if ($('valName')) $('valName').textContent = name || '— (Not set)';
+    if ($('valAge')) $('valAge').textContent = (age !== undefined && age !== null && age !== '') ? `${age} years old` : '— (Not set)';
+    if ($('valEmail')) $('valEmail').textContent = email || '—';
+    if (email && email.includes('@')) {
+      const disp = name ? `${name} (${email})` : email;
+      setSync('☁️ Signed in as ' + disp + ' · synced');
+    }
+  };
+
+  const openEditProfileModal = () => {
+    openSheet(`
+      <div class="sh">
+        <button class="lk" id="cx">Cancel</button>
+        <button class="lk" id="sv">Save</button>
+      </div>
+      <h3 style="font-size:24px">Edit Profile</h3>
+      <div class="note" style="margin:0 0 16px">Update your name and age anytime.</div>
+
+      <div class="eb" style="margin-bottom:6px">Full Name</div>
+      <input class="in" id="editName" placeholder="e.g. Alex Rivera" maxlength="80" value="${esc(userProfile.name || '')}">
+
+      <div class="eb" style="margin:16px 0 6px">Age <span style="font-weight:400;color:var(--mu);font-size:12px">(Optional, 1–120)</span></div>
+      <input class="in" id="editAge" type="number" inputmode="numeric" min="1" max="120" placeholder="e.g. 24" value="${(userProfile.age !== undefined && userProfile.age !== null) ? userProfile.age : ''}">
+    `);
+
+    $('cx').onclick = closeSheet;
+    $('sv').onclick = async () => {
+      const newName = $('editName').value.trim();
+      const rawAge = $('editAge').value.trim();
+      let newAge = undefined;
+      if (rawAge !== '') {
+        newAge = Number(rawAge);
+        if (isNaN(newAge) || newAge < 1 || newAge > 120) {
+          toast('Please enter a valid age between 1 and 120');
+          return;
+        }
+      }
+
+      $('sv').disabled = true;
+      $('sv').textContent = 'Saving…';
+
+      if (isTrial) {
+        userProfile.name = newName;
+        userProfile.age = newAge;
+        localStorage.setItem('habitly_trial_profile', JSON.stringify({ name: newName, age: newAge }));
+        updateProfileDisplay();
+        closeSheet();
+        toast('✓ Profile updated');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/me', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName, age: newAge })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to update profile');
+        userProfile.name = data.name;
+        userProfile.age = data.age;
+        updateProfileDisplay();
+        closeSheet();
+        toast('✓ Profile updated successfully');
+      } catch (err) {
+        toast(err.message || 'Could not update profile');
+        $('sv').disabled = false;
+        $('sv').textContent = 'Save';
+      }
+    };
+  };
+
+  if ($('editProfileBtn')) $('editProfileBtn').onclick = openEditProfileModal;
+  if ($('editProfileBtn2')) $('editProfileBtn2').onclick = openEditProfileModal;
+
   const reveal = () => {
     document.querySelector('.app').classList.add('ready');
     document.body.classList.add('ready');
@@ -415,17 +507,20 @@ $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
       const tb = $('trialBanner');
       if (tb) tb.style.display = 'flex';
 
-      // Profile details for guest trial
-      if ($('profAvatar')) $('profAvatar').textContent = '🌱';
-      if ($('profDisplayName')) $('profDisplayName').textContent = 'Guest Explorer';
+      let savedProf = {};
+      try { savedProf = JSON.parse(localStorage.getItem('habitly_trial_profile') || '{}'); } catch (e) {}
+      userProfile = {
+        name: savedProf.name || 'Guest User',
+        age: savedProf.age,
+        email: 'None (Guest Mode)'
+      };
       if ($('profBadge')) {
         $('profBadge').textContent = 'Guest Trial · Local';
         $('profBadge').style.background = 'var(--soft)';
         $('profBadge').style.color = 'var(--mu)';
       }
-      if ($('valName')) $('valName').textContent = 'Guest User';
-      if ($('valAge')) $('valAge').textContent = '— (Not set)';
-      if ($('valEmail')) $('valEmail').textContent = 'None (Guest Mode)';
+      updateProfileDisplay();
+
       if ($('logout')) {
         $('logout').textContent = '✨ Sign In or Create Account';
         $('logout').onclick = () => { location.href = '/login.html'; };
@@ -452,21 +547,14 @@ $('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
         return x;
       }
     };
-    const displayName = name ? `${name} (${email})` : email;
-    setSync('☁️ Signed in as ' + displayName + ' · synced');
 
-    // Populate user profile section
-    const initial = (name && name.trim()) ? name.trim()[0].toUpperCase() : (email ? email[0].toUpperCase() : '👤');
-    if ($('profAvatar')) $('profAvatar').textContent = initial;
-    if ($('profDisplayName')) $('profDisplayName').textContent = name || email.split('@')[0];
+    userProfile = { name: name || '', age, email };
     if ($('profBadge')) {
       $('profBadge').textContent = 'Cloud Synced ☁️';
       $('profBadge').style.background = 'rgba(72, 167, 104, 0.15)';
       $('profBadge').style.color = '#2d864e';
     }
-    if ($('valName')) $('valName').textContent = name || '—';
-    if ($('valAge')) $('valAge').textContent = (age !== undefined && age !== null && age !== '') ? `${age} years old` : '—';
-    if ($('valEmail')) $('valEmail').textContent = email;
+    updateProfileDisplay();
 
     // Email reminders preference & test trigger
     let emailRemEnabled = emailReminders !== false;

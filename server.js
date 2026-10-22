@@ -496,6 +496,38 @@ app.get('/api/me', auth, async (req, res) => {
   });
 });
 
+app.put('/api/me', auth, async (req, res) => {
+  try {
+    const updates = {};
+    if (req.body.name !== undefined) {
+      updates.name = String(req.body.name || '').trim().slice(0, 80);
+    }
+    if (req.body.age !== undefined) {
+      if (req.body.age === '' || req.body.age === null) {
+        updates.age = undefined;
+      } else {
+        const parsedAge = Number(req.body.age);
+        if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
+          return res.status(400).json({ error: 'Please enter a valid age between 1 and 120' });
+        }
+        updates.age = parsedAge;
+      }
+    }
+    const user = await User.findByIdAndUpdate(req.uid, updates, { new: true });
+    if (!user) return res.status(401).json({ error: 'Not signed in' });
+    res.json({
+      ok: true,
+      name: user.name || '',
+      age: user.age,
+      email: user.email,
+      emailReminders: user.emailReminders !== false
+    });
+  } catch (e) {
+    console.error('Update profile error:', e);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
 /* ---------- User data ---------- */
 app.get('/api/state', auth, async (req, res) => {
   const s = await State.findOne({ user: req.uid });
