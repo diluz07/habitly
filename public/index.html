@@ -1,654 +1,2365 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Habitly</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Fraunces:ital,wght@0,400;1,400&display=swap">
-<style>
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6efe2;--card:#fdfaf3;--tx:#2a211d;--mu:#8c8176;--ac:#c8553d;--bd:#e8dfcd;--soft:#efe6d6}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1713;--card:#262019;--tx:#f1e9dc;--mu:#a1958a;--ac:#e0735a;--bd:#3a3128;--soft:#30281f}}
-:root[data-theme="dark"]{--bg:#1c1713;--card:#262019;--tx:#f1e9dc;--mu:#a1958a;--ac:#e0735a;--bd:#3a3128;--soft:#30281f}
-:root[data-theme="light"]{--bg:#f6efe2;--card:#fdfaf3;--tx:#2a211d;--mu:#8c8176;--ac:#c8553d;--bd:#e8dfcd;--soft:#efe6d6}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 "DM Sans",system-ui,-apple-system,sans-serif}
-button,input{font:inherit;color:inherit}
-.app{max-width:480px;margin:0 auto;padding:22px 16px 130px}
-.eb{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mu)}
-.date{font:400 44px/1.1 Fraunces,Georgia,serif;margin:6px 0 14px}.date i{color:var(--ac)}
-.pr{display:flex;justify-content:space-between;color:var(--mu);margin-bottom:6px}.pr b{color:var(--tx);font-weight:500}
-.bar{height:6px;background:var(--bd);border-radius:9px;overflow:hidden;margin-bottom:24px}.bar i{display:block;height:100%;background:var(--ac);border-radius:9px;transition:width .4s}
-.gh{display:flex;justify-content:space-between;margin:0 6px 8px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:24px;margin-bottom:22px;overflow:hidden}
-.pad{padding:16px}
-.row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-top:1px solid var(--bd)}.row:first-child{border-top:0}
-.row.off{opacity:.45}
-.ck{width:34px;height:34px;border-radius:50%;border:2px solid var(--bd);background:transparent;flex:none;cursor:pointer;color:#fff;font-size:16px;padding:0}
-.ck.on{background:var(--c);border-color:var(--c)}
-.mid{flex:1;min-width:0;cursor:pointer}.nm{font-size:17px;font-weight:500}.nm.dn{text-decoration:line-through;color:var(--mu)}.sub{font-size:13px;color:var(--mu)}
-.badge{background:var(--soft);border-radius:99px;padding:3px 10px;font-size:14px;white-space:nowrap}.badge.z{color:var(--mu)}
-.ring{width:32px;height:32px;flex:none}
-.empty{color:var(--mu);text-align:center;padding:22px}
-h3{font:400 22px Fraunces,Georgia,serif;margin:0 0 12px}
-nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--bd);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
-nav>div{display:flex;width:100%;max-width:480px}
-nav button{flex:1;background:none;border:0;padding:8px 0 10px;color:var(--mu);font-size:10px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
-nav button span{display:block;font-size:20px;letter-spacing:0}nav button.on{color:var(--tx)}
-.fab{position:fixed;right:max(18px,calc(50% - 222px));bottom:calc(78px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--tx);color:var(--bg);font-size:30px;cursor:pointer;z-index:6;box-shadow:0 6px 18px rgba(0,0,0,.25)}
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;justify-content:center;z-index:30}.ov.show{display:flex}
-.sheet{background:var(--bg);width:100%;max-width:480px;border-radius:26px 26px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom,0px));max-height:90%;overflow-y:auto}
-.sh{display:flex;justify-content:space-between;margin-bottom:6px}.lk{background:none;border:0;color:var(--ac);font-weight:600;cursor:pointer;padding:6px 0}
-.in{width:100%;padding:14px;border-radius:14px;border:1px solid var(--bd);background:var(--card);margin:6px 0}
-.cols{display:flex;justify-content:space-between;padding:14px;background:var(--card);border-radius:14px;margin:6px 0}
-.cd{width:30px;height:30px;border-radius:50%;border:3px solid transparent;cursor:pointer;background:var(--c)}.cd.sel{border-color:var(--tx)}
-.days{display:flex;gap:4px;background:var(--card);border-radius:14px;padding:6px;margin:6px 0}
-.days button{flex:1;padding:9px 0;border-radius:9px;border:0;background:none;color:var(--ac);font-weight:600;cursor:pointer}.days button.on{background:var(--ac);color:#fff}
-.opt{display:block;width:100%;text-align:left;padding:14px;margin:6px 0;border-radius:14px;border:1px solid var(--bd);background:var(--card);cursor:pointer}
-.btn{padding:11px 16px;border-radius:12px;border:0;background:var(--ac);color:#fff;font-weight:600;cursor:pointer}.btn.alt{background:var(--soft);color:var(--tx)}.btn:disabled{opacity:.5}
-.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:3px}.hc{aspect-ratio:1;border-radius:3px;background:var(--soft)}
-.calh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.calh button{background:none;border:0;font-size:22px;cursor:pointer}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;row-gap:4px}.cal .w{font-size:12px;color:var(--mu);padding:4px 0}
-.cl{padding:6px 0;border-radius:12px;cursor:pointer;min-height:46px}.cl.sel{background:var(--soft)}.cl.td{outline:1px solid var(--ac)}
-.dts{display:flex;gap:2px;justify-content:center;height:6px;margin-top:2px}.dts i{width:5px;height:5px;border-radius:50%}
-.mb{font-size:24px;background:none;border:2px solid transparent;border-radius:12px;cursor:pointer;padding:3px 6px;opacity:.5}.mb.sel{opacity:1;border-color:var(--ac);background:var(--soft)}
-.mr{display:flex;align-items:center;gap:8px;margin:6px 0}.mr>span{width:56px;color:var(--mu);font-size:13px}
-.xp{height:8px;border-radius:9px;background:var(--bd);overflow:hidden}.xp i{display:block;height:100%;background:var(--ac)}
-.garden{display:flex;flex-wrap:wrap;gap:6px;font-size:32px;margin-top:10px}
-.hb{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}.hb i{display:block;height:10px;border-radius:9px;background:var(--ac)}
-.chat{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:10px 0}
-.msg{padding:9px 12px;border-radius:14px;max-width:88%;white-space:pre-wrap}.me{align-self:flex-end;background:var(--ac);color:#fff}.ai{align-self:flex-start;background:var(--soft)}
-.r{display:flex;gap:8px;margin:6px 0}.r .in{margin:0}
-.note{font-size:13px;color:var(--mu);margin-top:8px}
-.toast{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:12px;max-width:90%;z-index:40}
-.v{display:none}.v.show{display:block}
-.app{max-width:480px;margin:0 auto;padding:22px 16px 130px;opacity:0;transition:opacity .25s ease}
-.app.ready{opacity:1}
-nav, .fab{display:none}
-body.ready nav{display:flex}
-body.ready .fab{display:block}
-@keyframes pulse{from{transform:scale(0.95);opacity:0.8}to{transform:scale(1.08);opacity:1}}
-</style></head>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Habitly — Mindful Habit Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <script>
+    (function(){
+      const savedTheme = localStorage.getItem('habitly_theme');
+      if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <style>
+    :root {
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      --bg: #F6EFE2;
+      --card: #FDFAF3;
+      --tx: #2A211D;
+      --mu: #8C8176;
+      --ac: #C8553D;
+      --ac-hover: #b4452e;
+      --bd: #E8DFCD;
+      --soft: #EFE6D6;
+      --sage: #7AA57A;
+      --sky: #6FA8D6;
+      --lavender: #A38FD6;
+      --amber: #E0A458;
+      --rose: #D6708A;
+      --teal: #4FA3A0;
+      --shadow-sm: 0 2px 8px rgba(42, 33, 29, 0.04);
+      --shadow-md: 0 8px 24px -4px rgba(42, 33, 29, 0.08);
+      --shadow-dock: 0 10px 30px -5px rgba(42, 33, 29, 0.12), 0 2px 8px rgba(42, 33, 29, 0.06);
+    }
+    html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #1C1713;
+        --card: #262019;
+        --tx: #F1E9DC;
+        --mu: #A1958A;
+        --ac: #E0735A;
+        --ac-hover: #ec7f66;
+        --bd: #3A3128;
+        --soft: #30281F;
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+        --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.4);
+        --shadow-dock: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #1C1713;
+      --card: #262019;
+      --tx: #F1E9DC;
+      --mu: #A1958A;
+      --ac: #E0735A;
+      --ac-hover: #ec7f66;
+      --bd: #3A3128;
+      --soft: #30281F;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.4);
+      --shadow-dock: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    :root[data-theme="light"] {
+      --bg: #F6EFE2;
+      --card: #FDFAF3;
+      --tx: #2A211D;
+      --mu: #8C8176;
+      --ac: #C8553D;
+      --ac-hover: #b4452e;
+      --bd: #E8DFCD;
+      --soft: #EFE6D6;
+      --shadow-sm: 0 2px 8px rgba(42, 33, 29, 0.04);
+      --shadow-md: 0 8px 24px -4px rgba(42, 33, 29, 0.08);
+      --shadow-dock: 0 10px 30px -5px rgba(42, 33, 29, 0.12), 0 2px 8px rgba(42, 33, 29, 0.06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--tx);
+      font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+    button, input { font: inherit; color: inherit; }
+    
+    /* Top Header Bar */
+    .top-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--card);
+      border-bottom: 1px solid var(--bd);
+      padding: 0 16px;
+      backdrop-filter: blur(8px);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+    .top-header-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      color: var(--tx);
+      flex-shrink: 0;
+    }
+    .brand-logo span {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+    .sync-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mu);
+    }
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--sage);
+      flex-shrink: 0;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .theme-pill-btn {
+      background: var(--bg);
+      border: 1px solid var(--bd);
+      border-radius: 9999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--tx);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .theme-pill-btn:hover {
+      border-color: var(--tx);
+      transform: translateY(-1px);
+    }
+    .xp-pill {
+      background: var(--bg);
+      border: 1px solid var(--bd);
+      border-radius: 9999px;
+      padding: 4px 9px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--tx);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .avatar-chip {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--ac);
+      color: #FDFAF3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid var(--card);
+      flex-shrink: 0;
+      transition: transform 0.15s ease;
+    }
+    .avatar-chip:hover {
+      transform: scale(1.06);
+    }
+
+    /* Container */
+    .app {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 20px 16px 130px;
+      opacity: 0;
+      transition: opacity .25s ease;
+    }
+    .app.ready { opacity: 1; }
+
+    /* Typography helpers */
+    .eb {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--mu);
+    }
+    .date-heading {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 36px;
+      font-weight: 400;
+      line-height: 1.15;
+      margin: 4px 0 16px;
+      color: var(--tx);
+    }
+    .date-heading i {
+      font-family: 'Fraunces', Georgia, serif;
+      font-style: italic;
+      color: var(--ac);
+      font-weight: 400;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 22px;
+      margin-bottom: 18px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+    .pad { padding: 16px 18px; }
+
+    /* Progress Card */
+    .pr-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .pr-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--tx);
+    }
+    .pr-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ac);
+      flex-shrink: 0;
+    }
+    .pr-pct {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 19px;
+      color: var(--tx);
+      font-weight: 500;
+    }
+    .bar {
+      height: 8px;
+      background: var(--bd);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    .bar i {
+      display: block;
+      height: 100%;
+      background: var(--ac);
+      border-radius: 9999px;
+      transition: width .4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Reflective Mood State */
+    .mood-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .mood-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 3px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--mu);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .mood-btn:hover {
+      background: var(--bg);
+      border-color: var(--bd);
+      color: var(--tx);
+    }
+    .mood-btn.sel {
+      background: rgba(200, 85, 61, 0.12);
+      color: var(--ac);
+      border-color: rgba(200, 85, 61, 0.35);
+    }
+    .mood-btn .material-symbols-outlined {
+      font-size: 24px;
+    }
+    .mood-btn.sel .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1;
+    }
+    .mood-label {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-top: 3px;
+      white-space: nowrap;
+    }
+
+    /* Habit Rows */
+    .habit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 16px;
+      border-top: 1px solid var(--bd);
+      transition: background-color 0.15s ease;
+      cursor: pointer;
+      gap: 10px;
+    }
+    .habit-row:first-child { border-top: 0; }
+    .habit-row:hover { background: rgba(239, 230, 214, 0.25); }
+    .habit-row.off { opacity: 0.55; }
+    
+    .habit-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+    .check-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--c, var(--bd));
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      cursor: pointer;
+      color: #FDFAF3;
+      padding: 0;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .check-btn.on {
+      background: var(--c, var(--ac));
+      border-color: var(--c, var(--ac));
+    }
+    .check-btn span {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .habit-info {
+      min-width: 0;
+      flex: 1;
+    }
+    .habit-title {
+      font-size: 15.5px;
+      font-weight: 500;
+      color: var(--tx);
+      line-height: 1.3;
+      transition: all 0.15s ease;
+      word-break: break-word;
+    }
+    .habit-title.dn {
+      text-decoration: line-through;
+      color: var(--mu);
+    }
+    .habit-meta {
+      font-size: 11.5px;
+      color: var(--mu);
+      margin-top: 2px;
+    }
+
+    .habit-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .week-dots {
+      display: flex;
+      align-items: center;
+      gap: 3.5px;
+    }
+    .w-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--bd);
+    }
+    .w-dot.filled {
+      background: var(--c, var(--ac));
+    }
+    .streak-badge {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: var(--bg);
+      border: 1px solid var(--bd);
+      border-radius: 9999px;
+      padding: 2px 7px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--tx);
+      white-space: nowrap;
+    }
+    .streak-badge.z {
+      color: var(--mu);
+      opacity: 0.6;
+    }
+    .streak-flame {
+      color: var(--ac);
+      font-size: 13.5px;
+      font-variation-settings: 'FILL' 1;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 18px;
+      border-radius: 14px;
+      border: 0;
+      background: var(--ac);
+      color: #FDFAF3;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { background: var(--ac-hover); transform: translateY(-1px); }
+    .btn.alt {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      color: var(--tx);
+    }
+    .btn.alt:hover { background: var(--soft); color: var(--tx); }
+    .btn:disabled { opacity: .5; pointer-events: none; }
+
+    /* Inputs */
+    .in {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 14px;
+      border: 1px solid var(--bd);
+      background: var(--card);
+      color: var(--tx);
+      margin: 6px 0;
+      outline: none;
+      font-size: 14.5px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .in:focus {
+      border-color: var(--ac);
+      box-shadow: 0 0 0 2px rgba(200, 85, 61, 0.15);
+    }
+
+    /* Floating Pill Dock Navigation */
+    .dock-wrapper {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: max(14px, env(safe-area-inset-bottom, 14px));
+      display: flex;
+      justify-content: center;
+      padding: 0 12px;
+      z-index: 30;
+      pointer-events: none;
+    }
+    .dock {
+      pointer-events: auto;
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 9999px;
+      box-shadow: var(--shadow-dock);
+      display: flex;
+      align-items: center;
+      padding: 5px 8px;
+      gap: 3px;
+      max-width: 420px;
+      width: 100%;
+      backdrop-filter: blur(12px);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+    .dock-btn {
+      flex: 1;
+      background: none;
+      border: 0;
+      padding: 6px 2px;
+      border-radius: 9999px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      color: var(--mu);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .dock-btn .material-symbols-outlined {
+      font-size: 21px;
+      transition: transform 0.15s ease;
+    }
+    .dock-btn span.label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .dock-btn:hover { color: var(--tx); }
+    .dock-btn.on { color: var(--ac); }
+    .dock-btn.on .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1;
+      transform: scale(1.06);
+    }
+
+    /* Floating Action Button */
+    .fab {
+      position: fixed;
+      right: max(16px, calc(50% - 320px));
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 1px solid var(--tx);
+      background: var(--tx);
+      color: var(--bg);
+      cursor: pointer;
+      z-index: 25;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+    .fab:hover { transform: scale(1.06); }
+    .fab:active { transform: scale(0.96); }
+
+    /* Stats 2x2 grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    @media (min-width: 620px) {
+      .stats-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 18px;
+      padding: 14px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
+    .stat-val {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: clamp(22px, 5vw, 28px);
+      font-weight: 400;
+      color: var(--tx);
+      line-height: 1.15;
+      margin: 4px 0 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stat-sub {
+      font-size: 11.5px;
+      color: var(--mu);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Week Cadence Bar Chart */
+    .chart-container {
+      height: 150px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 6px;
+      padding-top: 20px;
+    }
+    .chart-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      position: relative;
+      min-width: 0;
+    }
+    .chart-bar-wrap {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .chart-bar {
+      width: 80%;
+      max-width: 32px;
+      background: rgba(200, 85, 61, 0.3);
+      border-radius: 6px 6px 2px 2px;
+      transition: height 0.4s ease, background-color 0.2s ease;
+    }
+    .chart-col.is-today .chart-bar {
+      background: var(--ac);
+    }
+    .chart-pct {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: var(--mu);
+      margin-bottom: 4px;
+    }
+    .chart-day {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--mu);
+      margin-top: 6px;
+    }
+    .chart-col.is-today .chart-day {
+      color: var(--ac);
+    }
+    .today-tag {
+      position: absolute;
+      top: 0;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      background: var(--ac);
+      color: #FDFAF3;
+      padding: 1px 5px;
+      border-radius: 9999px;
+    }
+
+    /* 17-Week Matrix Heatmap */
+    .heat-scroll {
+      overflow-x: auto;
+      padding-bottom: 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .heat {
+      display: grid;
+      grid-auto-flow: column;
+      grid-template-rows: repeat(7, 1fr);
+      gap: 3px;
+      min-width: 440px;
+    }
+    .hc {
+      aspect-ratio: 1;
+      border-radius: 3px;
+      background: var(--soft);
+      min-width: 11px;
+      min-height: 11px;
+    }
+
+    /* Habit Breakdown bars */
+    .breakdown-row {
+      margin-bottom: 12px;
+    }
+    .breakdown-row:last-child { margin-bottom: 0; }
+    .breakdown-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .breakdown-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13.5px;
+      font-weight: 500;
+      min-width: 0;
+    }
+    .breakdown-title span:last-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .breakdown-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .breakdown-track {
+      height: 7px;
+      background: var(--bd);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    .breakdown-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+
+    /* Calendar Grid */
+    .calh {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .calh b {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 19px;
+      font-weight: 500;
+    }
+    .calh button {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--bd);
+      background: var(--card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      cursor: pointer;
+    }
+    .cal {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      row-gap: 4px;
+    }
+    .cal .w {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mu);
+      padding: 4px 0;
+    }
+    .cl {
+      padding: 6px 0;
+      border-radius: 12px;
+      cursor: pointer;
+      min-height: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      border: 1px solid transparent;
+      transition: background-color 0.15s ease;
+    }
+    .cl:hover { background: var(--soft); }
+    .cl.sel {
+      background: var(--soft);
+      border-color: var(--bd);
+    }
+    .cl.td {
+      outline: 2px solid var(--ac);
+      outline-offset: -2px;
+    }
+    .dts {
+      display: flex;
+      gap: 2px;
+      justify-content: center;
+      height: 6px;
+      margin-top: 3px;
+    }
+    .dts i {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    /* Coach Chat Feed */
+    .chat {
+      max-height: 340px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      margin: 12px 0;
+      padding-right: 2px;
+    }
+    .msg {
+      padding: 11px 15px;
+      border-radius: 16px;
+      max-width: 86%;
+      font-size: 14px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .me {
+      align-self: flex-end;
+      background: var(--ac);
+      color: #FDFAF3;
+      border-bottom-right-radius: 4px;
+    }
+    .ai {
+      align-self: flex-start;
+      background: var(--card);
+      border: 1px solid var(--bd);
+      color: var(--tx);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Bottom Sheets */
+    .ov {
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 24, 20, 0.45);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 50;
+    }
+    .ov.show { display: flex; }
+    .sheet {
+      background: var(--bg);
+      color: var(--tx);
+      width: 100%;
+      max-width: 500px;
+      border-radius: 26px 26px 0 0;
+      padding: 20px 18px calc(24px + env(safe-area-inset-bottom, 0px));
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+      animation: sheetUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes sheetUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+    .sh {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .lk {
+      background: none;
+      border: 0;
+      color: var(--ac);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 6px 0;
+    }
+    .cols {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px;
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 14px;
+      margin: 8px 0;
+    }
+    .cd {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      background: var(--c);
+    }
+    .cd.sel { border-color: var(--tx); }
+    .days {
+      display: flex;
+      gap: 4px;
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 14px;
+      padding: 6px;
+      margin: 8px 0;
+    }
+    .days button {
+      flex: 1;
+      padding: 8px 0;
+      border-radius: 8px;
+      border: 0;
+      background: none;
+      color: var(--tx);
+      font-weight: 600;
+      font-size: 12.5px;
+      cursor: pointer;
+    }
+    .days button.on {
+      background: var(--ac);
+      color: #FDFAF3;
+    }
+    .opt {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 13px 15px;
+      margin: 7px 0;
+      border-radius: 14px;
+      border: 1px solid var(--bd);
+      background: var(--card);
+      color: var(--tx);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .opt:hover { background: var(--soft); }
+
+    /* Callout Card */
+    .callout-card {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-left: 4px solid var(--ac);
+      border-radius: 18px;
+      padding: 15px 16px;
+      margin-bottom: 18px;
+    }
+    .callout-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ac);
+      margin-bottom: 6px;
+    }
+
+    /* Toast */
+    .toast {
+      display: none;
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+      background: var(--tx);
+      color: var(--bg);
+      padding: 10px 18px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 500;
+      max-width: 90%;
+      z-index: 60;
+      box-shadow: var(--shadow-md);
+      animation: toastIn 0.2s ease-out;
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translate(-50%, 8px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+
+    /* View Switcher */
+    .v { display: none; }
+    .v.show { display: block; animation: fadeIn 0.2s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .garden-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 26px;
+      margin-top: 8px;
+    }
+    .note {
+      font-size: 12.5px;
+      color: var(--mu);
+      line-height: 1.4;
+      margin-top: 8px;
+    }
+    .r {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0;
+    }
+    .r .in { margin: 0; }
+    .quote-footer {
+      text-align: center;
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-size: 14px;
+      color: var(--mu);
+      margin: 18px 0 10px;
+    }
+
+    /* Responsive Tweaks */
+    @media (max-width: 480px) {
+      .week-dots { display: none; }
+      .date-heading { font-size: 30px; }
+      .app { padding: 16px 12px 120px; }
+      .card { border-radius: 18px; }
+      .pad { padding: 14px 15px; }
+      .sync-status span:last-child { display: none; }
+    }
+    @keyframes pulse { from { transform: scale(0.95); opacity: 0.8; } to { transform: scale(1.08); opacity: 1; } }
+  </style>
+</head>
 <body>
-<div id="bootScreen" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);z-index:99;transition:opacity .25s ease">
-  <div style="font-size:48px;animation:pulse 1.2s ease-in-out infinite alternate">🌱</div>
-  <div style="font-family:'Fraunces',Georgia,serif;font-size:22px;margin-top:10px;color:var(--tx)">Habitly</div>
-</div>
-<div class="app">
-  <div id="trialBanner" style="display:none;background:var(--soft);border:1px solid var(--bd);padding:10px 14px;border-radius:14px;margin-bottom:16px;font-size:13px;align-items:center;justify-content:space-between;gap:8px;">
-    <span>🌱 <b>Guest Preview:</b> Try checking off habits!</span>
-    <a href="/login?mode=signup" style="color:var(--ac);font-weight:600;text-decoration:none;white-space:nowrap;">Create Account &rarr;</a>
+  <!-- Boot Screen -->
+  <div id="bootScreen" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);z-index:99;transition:opacity .25s ease">
+    <div style="font-size:46px;animation:pulse 1.2s ease-in-out infinite alternate">🌱</div>
+    <div style="font-family:'Fraunces',Georgia,serif;font-size:24px;margin-top:8px;color:var(--tx);font-weight:400">Habitly</div>
+    <div class="eb" style="margin-top:3px;color:var(--mu)">Mindful Cadence</div>
   </div>
-  <section class="v show" id="v0">
-    <div class="eb" id="dow"></div>
-    <div class="date" id="date"></div>
-    <div class="pr"><span id="ptxt"></span><b id="ppct"></b></div>
-    <div class="bar"><i id="pbar" style="width:0"></i></div>
-    <div class="gh eb"><span>Today</span><span id="n1"></span></div>
-    <div class="card" id="list1"></div>
-    <button class="btn alt" id="add2" style="width:100%;margin:-8px 0 22px">+ Add habit</button>
-    <div id="offw"><div class="gh eb"><span>Not today</span><span id="n2"></span></div><div class="card" id="list2"></div></div>
-    <div class="gh eb"><span>Mood &amp; energy</span></div>
-    <div class="card pad"><div class="mr"><span>Mood</span><div id="moodB"></div></div><div class="mr"><span>Energy</span><div id="enB"></div></div></div>
-  </section>
 
-  <section class="v" id="v1">
-    <h3>Stats</h3>
-    <div class="card pad"><div class="eb" id="lvl"></div><div class="xp" style="margin-top:8px"><i id="xpb"></i></div><div class="garden" id="garden"></div></div>
-    <div class="gh eb"><span>Task activity</span></div>
-    <div class="card pad"><div class="heat" id="heat"></div></div>
-    <div class="gh eb"><span>Mood trend</span></div>
-    <div class="card pad"><div id="mbars"></div><div class="note" id="insight"></div></div>
-  </section>
+  <!-- Top Sticky Header with Theme & XP -->
+  <header class="top-header">
+    <div class="top-header-inner">
+      <a class="brand-logo" href="#">
+        <span>Habitly</span>
+      </a>
+      <div class="header-actions">
+        <!-- Prominent Dark/Light Theme Toggle -->
+        <button class="theme-pill-btn" id="headerThemeBtn" type="button" title="Toggle Light / Dark mode">
+          <span id="headerThemeIcon">🌙</span>
+          <span id="headerThemeText">Dark</span>
+        </button>
 
-  <section class="v" id="v2">
-    <div class="card pad"><div class="calh"><button id="pm" aria-label="Previous month">‹</button><b id="mt"></b><button id="nm2" aria-label="Next month">›</button></div><div class="cal" id="cal"></div></div>
-    <div class="gh eb"><span id="seld"></span></div>
-    <div class="card" id="dlist"></div>
-    <button class="btn alt" id="add3" style="width:100%">+ Add habit</button>
-  </section>
-
-  <section class="v" id="v3">
-    <h3>AI coach ✨</h3>
-    <div class="card pad">
-      <div class="r"><input class="in" id="nl" type="text" name="habit_quick_log" autocomplete="off" autocorrect="on" spellcheck="true" data-lpignore="true" data-form-type="other" placeholder="Quick log: “ran 3km and meditated”"><button class="btn alt" id="nlBtn">Log</button></div>
-      <div class="r" style="display:flex;justify-content:space-between;align-items:center">
-        <div style="display:flex;gap:8px">
-          <button class="btn alt" id="review">Weekly review</button>
-          <button class="btn alt" id="suggest">Suggest a habit</button>
+        <div class="sync-status" title="Sync Status">
+          <span class="sync-dot"></span>
+          <span id="headerSyncText">Synced</span>
         </div>
-        <button id="clearChatBtn" class="lk" style="font-size:12px;color:var(--mu);background:none;border:0;cursor:pointer;padding:0">Reset chat</button>
-      </div>
-      <div class="chat" id="chat"></div>
-      <div class="r"><input class="in" id="q" type="text" name="coach_chat_query" autocomplete="off" autocorrect="on" spellcheck="true" data-lpignore="true" placeholder="Ask your coach…"><button class="btn" id="send">Send</button></div>
-      <div class="note" id="aiNote" style="font-size:12px;line-height:1.4"></div>
-    </div>
-  </section>
+        
+        <div class="xp-pill" id="headerXpPill">
+          <span>✨</span>
+          <span id="headerXpVal">0 XP</span>
+        </div>
 
-  <section class="v" id="v4">
-    <h3>Profile &amp; Account</h3>
-
-    <div class="card pad" style="margin-bottom:18px">
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
-        <div id="profAvatar" style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--ac),#e0a458);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;box-shadow:0 6px 16px rgba(0,0,0,0.12)">
+        <div class="avatar-chip" id="profAvatarTop" title="View Profile">
           👤
         </div>
-        <div style="min-width:0;flex:1">
-          <div id="profDisplayName" style="font-size:19px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-            Habitly Member
-          </div>
-          <div id="profBadge" class="badge" style="display:inline-block;margin-top:4px;font-size:12px;font-weight:500">
-            Cloud Synced ☁️
-          </div>
-        </div>
-      </div>
-
-      <div class="gh eb" style="margin:16px 0 8px;display:flex;justify-content:space-between;align-items:center">
-        <span>Account Information</span>
-        <button id="editProfileBtn" class="lk" style="font-size:13px;font-weight:600;color:var(--ac);background:none;border:0;cursor:pointer;padding:0">✏️ Edit</button>
-      </div>
-      <div style="border-top:1px solid var(--bd)">
-        <div class="row" style="padding:11px 0;justify-content:space-between;border-top:0">
-          <span style="color:var(--mu);font-size:13px">Full Name</span>
-          <b id="valName" style="color:var(--tx);font-weight:600;font-size:14px">—</b>
-        </div>
-        <div class="row" style="padding:11px 0;justify-content:space-between">
-          <span style="color:var(--mu);font-size:13px">Age</span>
-          <b id="valAge" style="color:var(--tx);font-weight:600;font-size:14px">—</b>
-        </div>
-        <div class="row" style="padding:11px 0;justify-content:space-between">
-          <span style="color:var(--mu);font-size:13px">Email Address</span>
-          <b id="valEmail" style="color:var(--tx);font-weight:600;font-size:14px;word-break:break-all;text-align:right">—</b>
-        </div>
-        <div class="row" style="padding:11px 0;justify-content:space-between">
-          <span style="color:var(--mu);font-size:13px">Habits Tracked</span>
-          <b id="valHabitCount" style="color:var(--tx);font-weight:600;font-size:14px">0</b>
-        </div>
-        <div class="row" style="padding:11px 0;justify-content:space-between">
-          <span style="color:var(--mu);font-size:13px">Total Experience</span>
-          <b id="valXp" style="color:var(--tx);font-weight:600;font-size:14px">0 XP</b>
-        </div>
       </div>
     </div>
+  </header>
 
-    <div class="gh eb"><span>Preferences &amp; Cloud</span></div>
-    <div class="card pad" style="margin-bottom:18px">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px">
-        <div>
-          <div style="font-weight:500;font-size:15px">Appearance</div>
-          <div style="font-size:12px;color:var(--mu)">Toggle dark or light theme</div>
+  <!-- Main Application Body -->
+  <main class="app">
+    <!-- Guest Preview Banner -->
+    <div id="trialBanner" style="display:none;background:var(--card);border:1px solid var(--bd);padding:11px 14px;border-radius:16px;margin-bottom:18px;font-size:13px;align-items:center;justify-content:space-between;gap:8px;box-shadow:var(--shadow-sm);">
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span style="font-size:17px">🌱</span>
+        <span><b>Guest Preview:</b> Check off routines or log habits</span>
+      </div>
+      <a href="/login?mode=signup" style="color:var(--ac);font-weight:600;text-decoration:none;white-space:nowrap;">Create Account &rarr;</a>
+    </div>
+
+    <!-- ================= SECTION 0: TODAY ================= -->
+    <section class="v show" id="v0">
+      <div class="eb" id="dow"></div>
+      <h1 class="date-heading" id="date"></h1>
+
+      <!-- Progress Card -->
+      <div class="card pad">
+        <div class="pr-header">
+          <div class="pr-title">
+            <span class="pr-dot"></span>
+            <span id="ptxt">0 of 0 today</span>
+          </div>
+          <div class="pr-pct" id="ppct">0 %</div>
         </div>
-        <button class="btn alt" id="themeBtn" style="padding:8px 14px;font-size:13px">🌓 Theme</button>
+        <div class="bar">
+          <i id="pbar" style="width:0"></i>
+        </div>
       </div>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--bd)">
-        <div>
-          <div style="font-weight:500;font-size:15px">Browser Alerts</div>
-          <div style="font-size:12px;color:var(--mu)">In-browser notifications for habit cues</div>
+      <!-- Reflective State (Mood & Energy Check-in) -->
+      <div class="card pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+          <span class="eb">Reflective State</span>
+          <span style="font-size:11px;color:var(--mu);font-style:italic">Daily check-in</span>
         </div>
-        <button class="btn alt" id="notif" style="padding:8px 14px;font-size:13px">🔔 Notify</button>
+        <h3 style="font-family:'Fraunces',Georgia,serif;font-size:18px;font-weight:400;margin:3px 0 8px">How are you feeling?</h3>
+        
+        <div class="eb" style="margin-top:6px;font-size:10px">Mood</div>
+        <div class="mood-grid" id="moodB"></div>
+
+        <div class="eb" style="margin-top:12px;font-size:10px">Energy</div>
+        <div class="mood-grid" id="enB"></div>
       </div>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--bd)" id="emailReminderRow">
-        <div>
-          <div style="font-weight:500;font-size:15px">Email Reminders ✉️</div>
-          <div style="font-size:12px;color:var(--mu)" id="emailRemDesc">Daily checklist sent to your email</div>
+      <!-- Habits Today List -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:18px 4px 8px">
+        <span class="eb">Today · <span id="n1">0</span></span>
+        <span style="font-size:11.5px;color:var(--mu)">Tap circle to check off</span>
+      </div>
+      <div class="card" id="list1"></div>
+
+      <button class="btn alt" id="add2" style="width:100%;margin:-6px 0 18px;padding:12px;border-radius:14px">
+        <span>+</span> Add Habit
+      </button>
+
+      <!-- Not Scheduled for Today -->
+      <div id="offw">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 4px 8px">
+          <span class="eb">Not today · <span id="n2">0</span></span>
+          <span style="font-size:11.5px;color:var(--mu)">Scheduled later</span>
         </div>
-        <button class="btn alt" id="emailRemToggle" style="padding:8px 14px;font-size:13px">Enabled ✓</button>
+        <div class="card" id="list2"></div>
       </div>
 
-      <div style="padding:12px 0 4px;border-top:1px solid var(--bd)" id="sendReminderNowWrap">
-        <button class="btn alt" id="sendReminderNowBtn" style="width:100%;font-size:13px;padding:10px 14px;justify-content:center;display:flex;align-items:center;gap:6px">
-          <span>📨</span><span>Send Me Today's Reminder Email Now</span>
+      <div class="quote-footer">
+        “Small hinges swing big doors.”
+      </div>
+    </section>
+
+    <!-- ================= SECTION 1: STATS ================= -->
+    <section class="v" id="v1">
+      <div style="margin-bottom:16px">
+        <span class="eb">Insights &amp; Metrics</span>
+        <h1 style="font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:400;margin:3px 0 0">Habit Performance</h1>
+      </div>
+
+      <!-- 2x2 Metric Cards Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="eb">Total Habits</span>
+          <div class="stat-val" id="statTotalHabits">0</div>
+          <div class="stat-sub" id="statActiveSub">Active routines</div>
+        </div>
+        <div class="stat-card">
+          <span class="eb">Best Streak</span>
+          <div class="stat-val" id="statBestStreak" style="color:var(--ac)">0 <span style="font-size:13px;color:var(--mu);font-weight:400">days</span></div>
+          <div class="stat-sub" id="statBestName">—</div>
+        </div>
+        <div class="stat-card">
+          <span class="eb">Consistency</span>
+          <div class="stat-val" id="statConsistency">0%</div>
+          <div class="stat-sub">Last 7 days avg</div>
+        </div>
+        <div class="stat-card">
+          <span class="eb">Lifetime XP</span>
+          <div class="stat-val" id="statXpCount">0</div>
+          <div class="stat-sub" id="lvl">Level 1 Practitioner</div>
+        </div>
+      </div>
+
+      <!-- Weekly Cadence Chart -->
+      <div class="card pad">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:10px;border-bottom:1px solid var(--bd);margin-bottom:6px">
+          <div>
+            <span class="eb">Weekly Cadence</span>
+            <h3 style="font-family:'Fraunces',Georgia,serif;font-size:19px;font-weight:400;margin:2px 0 0">Performance by Day</h3>
+          </div>
+          <div class="sync-status" style="background:var(--bg);padding:3px 8px;border-radius:9999px;border:1px solid var(--bd)">
+            <span class="sync-dot" style="background:var(--ac)"></span>
+            <span>Current Week</span>
+          </div>
+        </div>
+        <div class="chart-container" id="weekChart"></div>
+      </div>
+
+      <!-- Habit Consistency Breakdown -->
+      <div class="card pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid var(--bd);margin-bottom:12px">
+          <div>
+            <span class="eb">Consistency by Habit</span>
+            <h3 style="font-family:'Fraunces',Georgia,serif;font-size:19px;font-weight:400;margin:2px 0 0">Habit Breakdown</h3>
+          </div>
+        </div>
+        <div id="habitBreakdownList"></div>
+      </div>
+
+      <!-- Activity Heatmap Matrix -->
+      <div class="card pad">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <span class="eb">Cadence Matrix</span>
+            <h3 style="font-family:'Fraunces',Georgia,serif;font-size:19px;font-weight:400;margin:2px 0 0">17-Week Activity Matrix</h3>
+          </div>
+          <div style="display:flex;align-items:center;gap:3px;font-size:9.5px;color:var(--mu)">
+            <span>Less</span>
+            <div style="width:7px;height:7px;background:var(--soft);border-radius:2px"></div>
+            <div style="width:7px;height:7px;background:rgba(200,85,61,0.3);border-radius:2px"></div>
+            <div style="width:7px;height:7px;background:rgba(200,85,61,0.7);border-radius:2px"></div>
+            <div style="width:7px;height:7px;background:var(--ac);border-radius:2px"></div>
+            <span>More</span>
+          </div>
+        </div>
+        <div class="heat-scroll">
+          <div class="heat" id="heat"></div>
+        </div>
+      </div>
+
+      <!-- Streak Garden -->
+      <div class="card pad">
+        <span class="eb">Habit Garden</span>
+        <h3 style="font-family:'Fraunces',Georgia,serif;font-size:19px;font-weight:400;margin:3px 0 3px">Streak Botanical Growth</h3>
+        <div class="garden-wrap" id="garden"></div>
+      </div>
+
+      <!-- Mentor's Reflection Callout (With fully displayed mood labels) -->
+      <div class="callout-card">
+        <div class="callout-tag">
+          <span class="material-symbols-outlined" style="font-size:16px">psychology</span>
+          <span>Mentor's Observation</span>
+        </div>
+        <div style="font-family:'Newsreader',Georgia,serif;font-size:15px;font-style:italic;line-height:1.45;color:var(--tx)" id="insight">
+          Log your mood on 5+ days to unlock mindful insights.
+        </div>
+        <div style="margin-top:14px" id="mbars"></div>
+      </div>
+    </section>
+
+    <!-- ================= SECTION 2: CALENDAR ================= -->
+    <section class="v" id="v2">
+      <div style="margin-bottom:16px">
+        <span class="eb">Schedule &amp; History</span>
+        <h1 style="font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:400;margin:3px 0 0">Calendar Rhythm</h1>
+      </div>
+
+      <div class="card pad">
+        <div class="calh">
+          <button id="pm" aria-label="Previous month">‹</button>
+          <b id="mt"></b>
+          <button id="nm2" aria-label="Next month">›</button>
+        </div>
+        <div class="cal" id="cal"></div>
+      </div>
+
+      <div style="margin:18px 4px 8px">
+        <span class="eb" id="seld"></span>
+      </div>
+      <div class="card" id="dlist"></div>
+      <button class="btn alt" id="add3" style="width:100%;padding:12px;border-radius:14px">+ Add Habit</button>
+    </section>
+
+    <!-- ================= SECTION 3: AI COACH ================= -->
+    <section class="v" id="v3">
+      <div style="margin-bottom:16px">
+        <span class="eb">Mindful Support</span>
+        <h1 style="font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:400;margin:3px 0 0">AI Habit Coach ✨</h1>
+      </div>
+
+      <div class="card pad">
+        <div class="r" style="margin-bottom:10px">
+          <input class="in" id="nl" type="text" name="habit_quick_log" autocomplete="off" autocorrect="on" spellcheck="true" data-lpignore="true" data-form-type="other" placeholder="Quick log: “ran 3km and meditated”">
+          <button class="btn alt" id="nlBtn" style="padding:12px 16px">Log</button>
+        </div>
+        
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;padding-bottom:10px;border-bottom:1px solid var(--bd)">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn alt" id="review" style="padding:7px 12px;font-size:12.5px;border-radius:10px">Weekly review</button>
+            <button class="btn alt" id="suggest" style="padding:7px 12px;font-size:12.5px;border-radius:10px">Suggest a habit</button>
+          </div>
+          <button id="clearChatBtn" class="lk" style="font-size:12px;color:var(--mu);cursor:pointer">Reset chat</button>
+        </div>
+
+        <div class="chat" id="chat"></div>
+
+        <div class="r">
+          <input class="in" id="q" type="text" name="coach_chat_query" autocomplete="off" autocorrect="on" spellcheck="true" data-lpignore="true" placeholder="Ask your coach anything…">
+          <button class="btn" id="send" style="padding:12px 18px">Send</button>
+        </div>
+        <div class="note" id="aiNote" style="font-size:11.5px;line-height:1.4">The coach runs through your server.</div>
+      </div>
+    </section>
+
+    <!-- ================= SECTION 4: PROFILE ================= -->
+    <section class="v" id="v4">
+      <div style="margin-bottom:16px">
+        <span class="eb">Account &amp; Sync</span>
+        <h1 style="font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:400;margin:3px 0 0">Profile &amp; Settings</h1>
+      </div>
+
+      <!-- Profile Identity Card -->
+      <div class="card pad" style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+          <div id="profAvatar" style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--ac),#e0a458);color:#FDFAF3;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;flex-shrink:0;box-shadow:var(--shadow-sm)">
+            👤
+          </div>
+          <div style="min-width:0;flex:1">
+            <div id="profDisplayName" style="font-family:'Fraunces',Georgia,serif;font-size:20px;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              Habitly Member
+            </div>
+            <div id="profBadge" style="display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:2px 9px;border-radius:9999px;font-size:11px;font-weight:600;background:rgba(122,165,122,0.18);color:var(--sage)">
+              Cloud Synced ☁️
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px">
+          <span class="eb">Account Details</span>
+          <button id="editProfileBtn" class="lk" style="font-size:13px;font-weight:600;color:var(--ac);cursor:pointer">✏️ Edit</button>
+        </div>
+        <div style="border-top:1px solid var(--bd)">
+          <div class="habit-row" style="padding:11px 0;border-top:0">
+            <span style="color:var(--mu);font-size:13px">Full Name</span>
+            <b id="valName" style="color:var(--tx);font-weight:600;font-size:13.5px">—</b>
+          </div>
+          <div class="habit-row" style="padding:11px 0">
+            <span style="color:var(--mu);font-size:13px">Age</span>
+            <b id="valAge" style="color:var(--tx);font-weight:600;font-size:13.5px">—</b>
+          </div>
+          <div class="habit-row" style="padding:11px 0">
+            <span style="color:var(--mu);font-size:13px">Email Address</span>
+            <b id="valEmail" style="color:var(--tx);font-weight:600;font-size:13.5px;word-break:break-all;text-align:right">—</b>
+          </div>
+          <div class="habit-row" style="padding:11px 0">
+            <span style="color:var(--mu);font-size:13px">Habits Tracked</span>
+            <b id="valHabitCount" style="color:var(--tx);font-weight:600;font-size:13.5px">0</b>
+          </div>
+          <div class="habit-row" style="padding:11px 0">
+            <span style="color:var(--mu);font-size:13px">Total Experience</span>
+            <b id="valXp" style="color:var(--tx);font-weight:600;font-size:13.5px">0 XP</b>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preferences & Cloud Sync Card -->
+      <div style="margin:18px 4px 6px">
+        <span class="eb">Preferences &amp; Cloud</span>
+      </div>
+      <div class="card pad" style="margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px">
+          <div>
+            <div style="font-weight:500;font-size:14.5px">Appearance</div>
+            <div style="font-size:11.5px;color:var(--mu)">Toggle dark or light craft palette</div>
+          </div>
+          <button class="btn alt" id="themeBtn" style="padding:7px 13px;font-size:12.5px;border-radius:12px">🌓 Theme</button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--bd)">
+          <div>
+            <div style="font-weight:500;font-size:14.5px">Browser Alerts</div>
+            <div style="font-size:11.5px;color:var(--mu)">In-browser reminders for scheduled habit cues</div>
+          </div>
+          <button class="btn alt" id="notif" style="padding:7px 13px;font-size:12.5px;border-radius:12px">🔔 Notify</button>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--bd)" id="emailReminderRow">
+          <div>
+            <div style="font-weight:500;font-size:14.5px">Email Reminders ✉️</div>
+            <div style="font-size:11.5px;color:var(--mu)" id="emailRemDesc">Daily checklist sent to your inbox</div>
+          </div>
+          <button class="btn alt" id="emailRemToggle" style="padding:7px 13px;font-size:12.5px;border-radius:12px">Enabled ✓</button>
+        </div>
+
+        <div style="padding:12px 0 4px;border-top:1px solid var(--bd)" id="sendReminderNowWrap">
+          <button class="btn alt" id="sendReminderNowBtn" style="width:100%;font-size:13px;padding:10px 14px;justify-content:center;border-radius:12px">
+            <span>📨</span><span>Send Me Today's Reminder Email Now</span>
+          </button>
+        </div>
+
+        <div style="border-top:1px solid var(--bd);padding-top:10px">
+          <div class="note" id="syncNote" style="margin:0;font-size:12px">☁️ Saved in this browser.</div>
+        </div>
+      </div>
+
+      <!-- Session Actions Card -->
+      <div style="margin:18px 4px 6px">
+        <span class="eb">Session</span>
+      </div>
+      <div class="card pad" style="display:flex;flex-direction:column;gap:8px">
+        <button class="btn" id="logout" style="width:100%;padding:13px;font-size:14.5px;border-radius:14px">
+          🚪 Sign Out
+        </button>
+        <button class="btn alt" id="switchAccBtn" style="width:100%;padding:12px;font-size:13.5px;border-radius:14px">
+          🔄 Switch Account / Sign In Different Email
         </button>
       </div>
+    </section>
+  </main>
 
-      <div style="border-top:1px solid var(--bd);padding-top:12px">
-        <div class="note" id="syncNote" style="margin:0;font-size:13px">☁️ Saved in this browser.</div>
-      </div>
-    </div>
+  <!-- Floating Add Button -->
+  <button class="fab" id="fab" aria-label="Add habit">
+    <span class="material-symbols-outlined" style="font-size:24px">add</span>
+  </button>
 
-    <div class="gh eb"><span>Session</span></div>
-    <div class="card pad" style="display:flex;flex-direction:column;gap:10px">
-      <button class="btn" id="logout" style="width:100%;padding:13px;font-size:15px">
-        🚪 Sign Out
-      </button>
-      <button class="btn alt" id="switchAccBtn" style="width:100%;padding:12px;font-size:14px">
-        🔄 Switch Account / Sign In Different Email
-      </button>
-    </div>
-  </section>
-</div>
+  <!-- Floating Bottom Pill Dock Navigation -->
+  <div class="dock-wrapper">
+    <nav class="dock" id="nav"></nav>
+  </div>
 
-<button class="fab" id="fab" aria-label="Add habit">+</button>
-<nav><div id="nav"></div></nav>
-<div class="ov" id="ov"><div class="sheet" id="sh"></div></div>
-<div class="toast" id="toast"></div>
+  <!-- Bottom Sheet Overlay -->
+  <div class="ov" id="ov">
+    <div class="sheet" id="sh"></div>
+  </div>
 
-<script>
-const savedTheme=localStorage.getItem('habitly_theme');
-if(savedTheme)document.documentElement.setAttribute('data-theme',savedTheme);
-const $=id=>document.getElementById(id);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const key=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
-const ago=n=>{const d=new Date();d.setDate(d.getDate()-n);return key(d)};
-const today=()=>ago(0);
-const PAL=['#c8553d','#a38fd6','#6fa8d6','#7aa57a','#e0a458','#d6708a','#b08968','#4fa3a0'];
-const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],ORD=[1,2,3,4,5,6,0],LB=['M','T','W','T','F','S','S'];
-let habits=[],mood={},ref=null,syncT=null,tab=0,sel=today(),mo=0;
-const setSync=t=>$('syncNote').textContent=t;
-const save=()=>{if(ref){clearTimeout(syncT);syncT=setTimeout(()=>{ref.set({habits,mood,t:Date.now()}).then(()=>setSync('☁️ Synced to your account')).catch(()=>setSync('Sync failed – saved in this browser'))},600)}};
-const col=h=>h.color||PAL[Math.max(0,habits.indexOf(h))%PAL.length];
-const sched=(h,d)=>!h.dow||h.dow.includes(new Date(d+'T12:00:00').getDay());
-const dlabel=h=>{const w=h.dow;if(!w||w.length===7)return'Daily';const s=[...w].sort().join();if(s==='1,2,3,4,5')return'Weekdays';if(s==='0,6')return'Weekends';return ORD.filter(x=>w.includes(x)).map(x=>DN[x]).join(' · ')};
-function streak(h){const f=h.freeze||{};let n=0,i=(h.days[today()]||f[today()])?0:1;while(i<400){const d=ago(i);if(h.days[d])n++;else if(!f[d]&&sched(h,d))break;i++}return n}
-function wk(h){let c=0,t=0;for(let i=0;i<7;i++){const d=ago(i);if(sched(h,d)){t++;if(h.days[d])c++}}return[c,t]}
-function ring(c,t,k){const L=75.4,p=t?c/t:0;return'<svg class="ring" viewBox="0 0 32 32"><circle cx="16" cy="16" r="12" fill="none" stroke="var(--bd)" stroke-width="3"/><circle cx="16" cy="16" r="12" fill="none" stroke="'+k+'" stroke-width="3" stroke-linecap="round" stroke-dasharray="'+(L*p)+' '+L+'" transform="rotate(-90 16 16)"/><text x="16" y="19" text-anchor="middle" font-size="9" fill="var(--tx)">'+c+'/'+t+'</text></svg>'}
-function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display='none',4500)}
-const tog=(h,d)=>{h.days[d]?delete h.days[d]:h.days[d]=1;save();render()};
+  <!-- In-app Toast Notification -->
+  <div class="toast" id="toast"></div>
 
-/* sheets */
-function openSheet(html){$('sh').innerHTML=html;$('ov').classList.add('show')}
-function closeSheet(){$('ov').classList.remove('show')}
-$('ov').onclick=e=>{if(e.target.id==='ov')closeSheet()};
-function newHabit(eh){
-  let c=eh?col(eh):PAL[habits.length%PAL.length],dw=eh&&eh.dow?[...eh.dow]:[0,1,2,3,4,5,6];
-  openSheet('<div class="sh"><button class="lk" id="cx">Cancel</button><button class="lk" id="sv">Save</button></div><h3 style="font-size:30px">'+(eh?'Edit habit':'Add new habit')+'</h3>'+
-    '<input class="in" id="hn" placeholder="e.g. Read Books" maxlength="60"><div class="cols" id="cs"></div>'+
-    '<div class="eb" style="margin-top:14px">In which days of week?</div><div class="days" id="ds"></div><button class="opt" id="ev" style="text-align:center;color:var(--ac)">Every day</button>'+
-    '<div class="eb" style="margin-top:14px">Reminder time (optional)</div>'+TP);
-  const paint=()=>{$('cs').innerHTML=PAL.map(p=>'<button class="cd'+(p===c?' sel':'')+'" style="--c:'+p+'" data-c="'+p+'" aria-label="Colour"></button>').join('');
-    $('ds').innerHTML=ORD.map((x,i)=>'<button class="'+(dw.includes(x)?'on':'')+'" data-d="'+x+'">'+LB[i]+'</button>').join('');
-    $('cs').querySelectorAll('button').forEach(b=>b.onclick=()=>{c=b.dataset.c;paint()});
-    $('ds').querySelectorAll('button').forEach(b=>b.onclick=()=>{const x=+b.dataset.d;dw=dw.includes(x)?dw.filter(y=>y!==x):[...dw,x];paint()})};
-  if(eh){$('hn').value=eh.name;$('ht').value=eh.time||''}presets();paint();$('ev').onclick=()=>{dw=[0,1,2,3,4,5,6];paint()};$('cx').onclick=closeSheet;
-  $('sv').onclick=()=>{const n=$('hn').value.trim();if(!n){toast('Give your habit a name');return}if(!dw.length){toast('Pick at least one day');return}
-    if(eh){eh.name=n;eh.color=c;eh.dow=dw;eh.time=$('ht').value||undefined}else habits.push({id:Date.now()+Math.random(),name:n,color:c,dow:dw,days:{},freeze:{},time:$('ht').value||undefined});save();closeSheet();render()};
-}
-const PR=[['🌅 Morning','07:00'],['☀️ Noon','12:00'],['🌤 Afternoon','15:00'],['🌙 Evening','19:00'],['😴 Night','21:30']];
-const TP='<div class="days" id="pt" style="flex-wrap:wrap"></div><div class="r"><input class="in" type="time" id="ht"><button class="btn alt" id="pc" type="button">No reminder</button></div>';
-function presets(){const pp=()=>{$('pt').innerHTML=PR.map(([l,v])=>'<button type="button" class="'+($('ht').value===v?'on':'')+'" data-v="'+v+'" style="flex:1 1 30%">'+l+'<br><small>'+v+'</small></button>').join('');$('pt').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('ht').value=b.dataset.v;pp()})};$('ht').oninput=pp;$('pc').onclick=()=>{$('ht').value='';pp()};pp()}
-function remSheet(h){openSheet('<div class="sh"><button class="lk" id="cx">Cancel</button><button class="lk" id="sv">Save</button></div><h3>Reminder</h3><div class="note" style="margin:0 0 8px">'+esc(h.name)+' · pick a time or choose your own</div>'+TP);$('ht').value=h.time||'';presets();$('cx').onclick=closeSheet;$('sv').onclick=()=>{h.time=$('ht').value||undefined;save();closeSheet();render();toast(h.time?'⏰ Reminder set for '+h.time:'Reminder removed')}}
-const FREEZE_MAX=2;
-function freezesUsed(){const p=today().slice(0,7);let n=0;habits.forEach(h=>Object.keys(h.freeze||{}).forEach(d=>{if(d.startsWith(p))n++}));return n}
-function actions(h){
-  openSheet('<h3>'+esc(h.name)+'</h3><button class="opt" id="a0">✏️ Edit habit (name, colour, days)</button><button class="opt" id="a1">❄️ Freeze today ('+(FREEZE_MAX-freezesUsed())+' left this month)</button><button class="opt" id="a2">⏰ '+(h.time?'Change reminder ('+h.time+')':'Set reminder')+'</button><button class="opt" id="a3">🗑 Delete habit</button>');
-  $('a0').onclick=()=>newHabit(h);
-  $('a1').onclick=()=>{const t=today();h.freeze=h.freeze||{};if(h.freeze[t]){delete h.freeze[t];toast('Freeze removed')}else if(h.days[t]){toast('Already done today')}else if(freezesUsed()>=FREEZE_MAX){toast('No freeze days left this month');return}else{h.freeze[t]=1;toast('❄️ Frozen. Your streak is safe today.')}save();closeSheet();render()};
-  $('a2').onclick=()=>remSheet(h);
-  $('a3').onclick=()=>{const a=$('a3');if(!a.dataset.s){a.dataset.s=1;a.textContent='⚠️ Tap again to delete this habit';return}habits=habits.filter(x=>x!==h);save();closeSheet();render()};
-}
+  <script>
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const key = d => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+    const ago = n => { const d = new Date(); d.setDate(d.getDate() - n); return key(d) };
+    const today = () => ago(0);
 
-/* render */
-function rowHtml(h,off){const k=col(h),t=today(),s=streak(h),[c,tt]=wk(h);
-  return'<div class="row'+(off?' off':'')+'"><button class="ck'+(h.days[t]?' on':'')+'" style="--c:'+k+'" aria-label="Check in">'+(h.days[t]?'✓':'')+'</button><div class="mid"><div class="nm'+(h.days[t]?' dn':'')+'">'+esc(h.name)+'</div><div class="sub">'+dlabel(h)+(h.time?' · '+h.time:'')+((h.freeze&&h.freeze[t])?' · ❄️ frozen':'')+'</div></div>'+
-  (off?'':'<span class="badge'+(s?'':' z')+'">🔥 '+s+'</span>'+ring(c,tt,k))+'</div>'}
-function bindRows(box,list,off){[...box.children].forEach((el,i)=>{if(!list[i])return;const h=list[i];el.querySelector('.mid').onclick=()=>actions(h);el.querySelector('.ck').onclick=()=>{if(off)return;tog(h,today())}})}
-const xp=()=>habits.reduce((a,h)=>a+Object.keys(h.days).length*10,0)+Object.keys(mood).length*5;
-const stage=s=>s>=30?'🌸':s>=14?'🌳':s>=7?'🪴':s>=3?'🌿':'🌱';
-const FACES=['😞','😕','😐','🙂','😄'],ENG=['😴','🥱','😐','⚡','🔥'];
-function pick(id,arr,f){const b=$(id);b.innerHTML='';const cur=(mood[today()]||{})[f];arr.forEach((e,i)=>{const x=document.createElement('button');x.className='mb'+(cur===i+1?' sel':'');x.textContent=e;x.setAttribute('aria-label',f+' '+(i+1));x.onclick=()=>{mood[today()]=Object.assign({},mood[today()],{[f]:i+1});save();render()};b.appendChild(x)})}
-function render(){
-  const n=new Date(),t=today();
-  $('dow').textContent=n.toLocaleDateString(undefined,{weekday:'long'});
-  $('date').innerHTML=n.toLocaleDateString(undefined,{month:'long'})+' <i>'+n.getDate()+'</i>';
-  const on=habits.filter(h=>sched(h,t)),off=habits.filter(h=>!sched(h,t)),dn=on.filter(h=>h.days[t]).length,pc=on.length?Math.round(dn/on.length*100):0;
-  $('ptxt').textContent=dn+' of '+on.length+' today';$('ppct').textContent=pc+' %';$('pbar').style.width=pc+'%';$('n1').textContent=on.length;$('n2').textContent=off.length;
-  $('list1').innerHTML=on.length?on.map(h=>rowHtml(h,0)).join(''):'<div class="empty">'+(habits.length?'Nothing scheduled today 🌿':'Tap + to add your first habit 🌱')+'</div>';
-  if(on.length)bindRows($('list1'),on,0);
-  $('offw').style.display=off.length?'block':'none';$('list2').innerHTML=off.map(h=>rowHtml(h,1)).join('');bindRows($('list2'),off,1);
-  pick('moodB',FACES,'m');pick('enB',ENG,'e');
-  /* stats */
-  const x=xp();$('lvl').textContent='Level '+(Math.floor(x/100)+1)+' · '+x+' XP';$('xpb').style.width=(x%100)+'%';
-  if($('valHabitCount'))$('valHabitCount').textContent=habits.length;
-  if($('valXp'))$('valXp').textContent=x+' XP';
-  const G=$('garden');G.innerHTML='';habits.forEach(h=>{const s=document.createElement('span');s.textContent=stage(streak(h));s.title=h.name+' · '+streak(h)+' day streak';G.appendChild(s)});
-  const dw=(n.getDay()+6)%7,H=$('heat');H.innerHTML='';
-  for(let k=0;k<119;k++){const o=dw+112-k,c=document.createElement('div');c.className='hc';if(o<0){c.style.visibility='hidden'}else{const d=ago(o),sc=habits.filter(h=>sched(h,d)),f=sc.length?sc.filter(h=>h.days[d]).length/sc.length:0;if(f)c.style.background='color-mix(in srgb,var(--ac) '+Math.round(25+f*75)+'%,var(--soft))'}H.appendChild(c)}
-  const cnt=[0,0,0,0,0],mx=Object.keys(mood).filter(d=>mood[d].m);mx.forEach(d=>cnt[mood[d].m-1]++);const m=Math.max(1,...cnt);
-  $('mbars').innerHTML=cnt.map((v,i)=>'<div class="hb"><span>'+FACES[i]+'</span><i style="width:'+(v/m*60)+'%"></i><span>'+v+'</span></div>').join('');
-  let txt;const days=mx.filter(()=>habits.length);
-  if(days.length<5)txt='Log your mood on 5+ days to unlock insights ('+days.length+'/5).';
-  else{const rt=d=>{const sc=habits.filter(h=>sched(h,d));return sc.length?sc.filter(h=>h.days[d]).length/sc.length:0},av=a=>a.reduce((s,d)=>s+rt(d),0)/a.length,hi=days.filter(d=>mood[d].m>=4),lo=days.filter(d=>mood[d].m<=3);
-    txt=(hi.length&&lo.length)?'💡 On days you feel good (4–5) you complete '+Math.round(av(hi)*100)+'% of habits, vs '+Math.round(av(lo)*100)+'% on other days.':'Not enough variety in your mood logs yet to compare days.'}
-  $('insight').textContent=txt;
-  /* calendar */
-  const b=new Date(n.getFullYear(),n.getMonth()+mo,1),first=(b.getDay()+6)%7,dim=new Date(b.getFullYear(),b.getMonth()+1,0).getDate();
-  $('mt').textContent=b.toLocaleDateString(undefined,{month:'long',year:'numeric'});
-  let ch=LB.map(l=>'<div class="w">'+l+'</div>').join('')+'<div></div>'.repeat(first);
-  for(let d=1;d<=dim;d++){const k=key(new Date(b.getFullYear(),b.getMonth(),d,12)),dots=habits.filter(h=>h.days[k]).slice(0,4).map(h=>'<i style="background:'+col(h)+'"></i>').join('');
-    ch+='<div class="cl'+(k===sel?' sel':'')+(k===t?' td':'')+'" data-k="'+k+'">'+d+'<div class="dts">'+dots+'</div></div>'}
-  $('cal').innerHTML=ch;$('cal').querySelectorAll('.cl').forEach(e=>e.onclick=()=>{sel=e.dataset.k;render()});
-  $('seld').textContent=new Date(sel+'T12:00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+' · tap a habit to mark it done';
-  const sl=habits.filter(h=>sched(h,sel));
-  $('dlist').innerHTML=sl.length?sl.map(h=>'<div class="row"><button class="ck'+(h.days[sel]?' on':'')+'" style="--c:'+col(h)+'">'+(h.days[sel]?'✓':'')+'</button><div class="mid"><div class="nm'+(h.days[sel]?' dn':'')+'">'+esc(h.name)+'</div></div><button class="lk" data-e="1" aria-label="Edit habit">✏️</button></div>').join(''):'<div class="empty">No habits scheduled this day</div>';
-  [...$('dlist').children].forEach((el,i)=>{const h=sl[i];if(!h)return;el.querySelector('[data-e]').onclick=e=>{e.stopPropagation();actions(h)};el.style.cursor='pointer';el.onclick=()=>{if(sel>t){toast('You can’t check in for a future day yet');return}tog(h,sel)}});
-}
-$('pm').onclick=()=>{mo--;render()};$('nm2').onclick=()=>{mo++;render()};
-$('fab').onclick=()=>newHabit();$('add2').onclick=()=>newHabit();$('add3').onclick=()=>newHabit();
-['Today|⌂','Stats|◔','Calendar|▦','Coach|✦','Profile|👤'].forEach((s,i)=>{const[l,ic]=s.split('|'),b=document.createElement('button');b.innerHTML='<span>'+ic+'</span>'+l;b.onclick=()=>{tab=i;document.querySelectorAll('.v').forEach((v,j)=>v.classList.toggle('show',j===i));[...$('nav').children].forEach((x,j)=>x.classList.toggle('on',j===i));$('fab').style.display=i===0?'block':'none'};$('nav').appendChild(b)});
-$('nav').children[0].classList.add('on');
-$('themeBtn').onclick=()=>{
-  const cur=document.documentElement.getAttribute('data-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
-  const next=cur==='dark'?'light':'dark';
-  document.documentElement.setAttribute('data-theme',next);
-  localStorage.setItem('habitly_theme',next);
-  toast(next==='dark'?'🌙 Dark mode enabled':'☀️ Light mode enabled');
-};
+    // Warm Editorial Craft Palette
+    const PAL = ['#C8553D', '#7AA57A', '#6FA8D6', '#E0A458', '#A38FD6', '#D6708A', '#4FA3A0', '#B08968'];
+    const DN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const ORD = [1, 2, 3, 4, 5, 6, 0];
+    const LB = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    let habits = [], mood = {}, ref = null, syncT = null, tab = 0, sel = today(), mo = 0;
 
-/* reminders */
-const fired={};
-setInterval(()=>{const n=new Date(),hm=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-  habits.forEach(h=>{const k=h.id+today();if(h.time===hm&&sched(h,today())&&!h.days[today()]&&!fired[k]){fired[k]=1;toast('⏰ Time for: '+h.name);try{if(window.Notification&&Notification.permission==='granted')new Notification('Habitly',{body:h.name})}catch(e){}}})},20000);
-$('notif').onclick=async()=>{try{const p=await Notification.requestPermission();toast(p==='granted'?'Notifications on while this page is open':'Blocked. In-page reminders still work.')}catch(e){toast('Browser notifications aren’t available here. In-page reminders still work.')}};
-
-/* AI with automatic behind-the-scenes multi-model failover */
-let history=[];
-
-if ($('clearChatBtn')) {
-  $('clearChatBtn').onclick = () => {
-    history = [];
-    $('chat').innerHTML = '';
-    toast('Chat reset');
-  };
-}
-
-async function sample(input,opts={}){
-  const messages=typeof input==='string'?[{role:'user',content:input}]:input;
-  const res=await fetch('/api/ai/chat',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({messages})
-  });
-  if(res.status===401){location.href='/login.html';throw new Error('auth')}
-  const data=await res.json().catch(()=>({}));
-  if(!res.ok)throw new Error(data.error||('ai '+res.status));
-  const text=data.text||'';
-  if(opts.onText)opts.onText({text});
-  return{text};
-}
-sample.json=async prompt=>{const{text}=await sample(prompt);const m=text.match(/\[[\s\d,]*\]/);if(m){try{return JSON.parse(m[0])}catch(e){}}
-  try{const v=JSON.parse(text.slice(text.indexOf('{'),text.lastIndexOf('}')+1));return Object.values(v).find(Array.isArray)||[]}catch(e){return[]}};
-$('aiNote').textContent='The coach runs through your server.';
-const summary=()=>JSON.stringify({today:today(),recentMood:Object.entries(mood).slice(-7),habits:habits.map(h=>({name:h.name,schedule:dlabel(h),streak:streak(h),doneLast7:wk(h)[0],of:wk(h)[1],doneToday:!!h.days[today()],last14:Array.from({length:14},(_,i)=>h.days[ago(13-i)]?1:0).join('')}))});
-function say(t,c){const m=document.createElement('div');m.className='msg '+c;m.textContent=t;$('chat').appendChild(m);$('chat').scrollTop=1e9;return m}
-async function ask(p,u){
-  if(u)say(u,'me');const m=say('Thinking…','ai');
-  const ctx='You are a warm, concise habit coach (max 120 words, no markdown). Be specific, kind, practical; suggest tiny steps. User data: '+summary()+'\n';
-  try{
-    const r=await sample([...history,{role:'user',content:ctx+p}],{cache:false,onText:({text})=>{m.textContent=text}});
-    m.textContent=r.text;history.push({role:'user',content:p},{role:'assistant',content:r.text});history=history.slice(-8);
-  } catch(e){
-    m.textContent=e.message&&!e.message.startsWith('ai ')?e.message:'The coach is temporarily busy. Please try again in a bit.';
-  }
-}
-$('send').onclick=()=>{const v=$('q').value.trim();if(!v)return;$('q').value='';ask(v,v)};$('q').onkeydown=e=>{if(e.key==='Enter')$('send').click()};
-$('review').onclick=()=>ask('Write my weekly review: one win, one struggle, one suggestion for next week.','Weekly review please');
-$('suggest').onclick=()=>ask('Suggest one new tiny habit with a habit-stacking cue (“after I…, I will…”).','Suggest a habit');
-$('nlBtn').onclick=async()=>{const v=$('nl').value.trim();if(!v||!habits.length)return;$('nlBtn').disabled=true;
-  try{const ids=await sample.json('Habits: '+JSON.stringify(habits.map((h,i)=>({i,name:h.name})))+'\nThe user said: "'+v+'"\nReturn ONLY a JSON array of habit indexes (numbers) the user says they completed.');
-    const hit=(Array.isArray(ids)?ids:[]).filter(i=>habits[i]);hit.forEach(i=>habits[i].days[today()]=1);save();render();
-    say(hit.length?'Logged: '+hit.map(i=>habits[i].name).join(', ')+' ✓':'I couldn’t match that to your habits.','ai');$('nl').value=''}
-  catch(e){say('Couldn’t log that right now. Please try again in a moment.','ai')}$('nlBtn').disabled=false};
-$('nl').onkeydown=e=>{if(e.key==='Enter')$('nlBtn').click()};
-
-/* account + data */
-(async()=>{
-  const urlParams = new URLSearchParams(window.location.search);
-  const isTrial = urlParams.get('trial') === '1' || sessionStorage.getItem('habitly_trial_mode') === 'true';
-
-  let userProfile = { name: '', age: undefined, email: '' };
-
-  const updateProfileDisplay = () => {
-    const name = userProfile.name || '';
-    const age = userProfile.age;
-    const email = userProfile.email || '';
-    const initial = (name && name.trim()) ? name.trim()[0].toUpperCase() : (email && email.includes('@') ? email[0].toUpperCase() : '🌱');
-    if ($('profAvatar')) $('profAvatar').textContent = initial;
-    if ($('profDisplayName')) $('profDisplayName').textContent = name || (email && email.includes('@') ? email.split('@')[0] : 'Guest Explorer');
-    if ($('valName')) $('valName').textContent = name || '— (Not set)';
-    if ($('valAge')) $('valAge').textContent = (age !== undefined && age !== null && age !== '') ? `${age} years old` : '— (Not set)';
-    if ($('valEmail')) $('valEmail').textContent = email || '—';
-    if (email && email.includes('@')) {
-      const disp = name ? `${name} (${email})` : email;
-      setSync('☁️ Signed in as ' + disp + ' · synced');
+    // Theme manager that synchronizes top header and profile buttons
+    function updateThemeUI() {
+      const cur = document.documentElement.getAttribute('data-theme') || 'light';
+      const isDark = cur === 'dark';
+      if ($('headerThemeIcon')) $('headerThemeIcon').textContent = isDark ? '☀️' : '🌙';
+      if ($('headerThemeText')) $('headerThemeText').textContent = isDark ? 'Light' : 'Dark';
+      if ($('themeBtn')) $('themeBtn').textContent = isDark ? '☀️ Light' : '🌙 Dark';
     }
-  };
 
-  const openEditProfileModal = () => {
-    openSheet(`
-      <div class="sh">
-        <button class="lk" id="cx">Cancel</button>
-        <button class="lk" id="sv">Save</button>
-      </div>
-      <h3 style="font-size:24px">Edit Profile</h3>
-      <div class="note" style="margin:0 0 16px">Update your name and age anytime.</div>
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('habitly_theme', next);
+      updateThemeUI();
+      toast(next === 'dark' ? '🌙 Dark mode enabled' : '☀️ Warm light mode enabled');
+    }
 
-      <div class="eb" style="margin-bottom:6px">Full Name</div>
-      <input class="in" id="editName" placeholder="e.g. Alex Rivera" maxlength="80" value="${esc(userProfile.name || '')}">
+    if ($('headerThemeBtn')) $('headerThemeBtn').onclick = toggleTheme;
+    if ($('themeBtn')) $('themeBtn').onclick = toggleTheme;
+    updateThemeUI();
 
-      <div class="eb" style="margin:16px 0 6px">Age <span style="font-weight:400;color:var(--mu);font-size:12px">(Optional, 1–120)</span></div>
-      <input class="in" id="editAge" type="number" inputmode="numeric" min="1" max="120" placeholder="e.g. 24" value="${(userProfile.age !== undefined && userProfile.age !== null) ? userProfile.age : ''}">
-    `);
+    const setSync = t => {
+      $('syncNote').textContent = t;
+      const shortText = t.includes('Signed in as') ? 'Synced' : (t.includes('Trial') ? 'Local Preview' : 'Saved');
+      if ($('headerSyncText')) $('headerSyncText').textContent = shortText;
+    };
 
-    $('cx').onclick = closeSheet;
-    $('sv').onclick = async () => {
-      const newName = $('editName').value.trim();
-      const rawAge = $('editAge').value.trim();
-      let newAge = undefined;
-      if (rawAge !== '') {
-        newAge = Number(rawAge);
-        if (isNaN(newAge) || newAge < 1 || newAge > 120) {
-          toast('Please enter a valid age between 1 and 120');
+    const save = () => {
+      if (ref) {
+        clearTimeout(syncT);
+        syncT = setTimeout(() => {
+          ref.set({ habits, mood, t: Date.now() })
+            .then(() => setSync('☁️ Synced to your account'))
+            .catch(() => setSync('Sync failed – saved in this browser'));
+        }, 600);
+      }
+    };
+
+    const col = h => h.color || PAL[Math.max(0, habits.indexOf(h)) % PAL.length];
+    const sched = (h, d) => !h.dow || h.dow.includes(new Date(d + 'T12:00:00').getDay());
+    const dlabel = h => {
+      const w = h.dow;
+      if (!w || w.length === 7) return 'Daily';
+      const s = [...w].sort().join();
+      if (s === '1,2,3,4,5') return 'Weekdays';
+      if (s === '0,6') return 'Weekends';
+      return ORD.filter(x => w.includes(x)).map(x => DN[x]).join(' · ');
+    };
+
+    function streak(h) {
+      const f = h.freeze || {};
+      let n = 0, i = (h.days[today()] || f[today()]) ? 0 : 1;
+      while (i < 400) {
+        const d = ago(i);
+        if (h.days[d]) n++;
+        else if (!f[d] && sched(h, d)) break;
+        i++;
+      }
+      return n;
+    }
+
+    function wk(h) {
+      let c = 0, t = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = ago(i);
+        if (sched(h, d)) {
+          t++;
+          if (h.days[d]) c++;
+        }
+      }
+      return [c, t];
+    }
+
+    function toast(m) {
+      const t = $('toast');
+      t.textContent = m;
+      t.style.display = 'block';
+      clearTimeout(toast.t);
+      toast.t = setTimeout(() => t.style.display = 'none', 4500);
+    }
+
+    const tog = (h, d) => {
+      h.days[d] ? delete h.days[d] : h.days[d] = 1;
+      save();
+      render();
+    };
+
+    /* Sheets */
+    function openSheet(html) {
+      $('sh').innerHTML = html;
+      $('ov').classList.add('show');
+    }
+    function closeSheet() {
+      $('ov').classList.remove('show');
+    }
+    $('ov').onclick = e => { if (e.target.id === 'ov') closeSheet(); };
+
+    const PR = [['🌅 Morning', '07:00'], ['☀️ Noon', '12:00'], ['🌤 Afternoon', '15:00'], ['🌙 Evening', '19:00'], ['😴 Night', '21:30']];
+    const TP = '<div class="days" id="pt" style="flex-wrap:wrap"></div><div class="r"><input class="in" type="time" id="ht"><button class="btn alt" id="pc" type="button">No reminder</button></div>';
+    
+    function presets() {
+      const pp = () => {
+        $('pt').innerHTML = PR.map(([l, v]) => '<button type="button" class="' + ($('ht').value === v ? 'on' : '') + '" data-v="' + v + '" style="flex:1 1 30%">' + l + '<br><small>' + v + '</small></button>').join('');
+        $('pt').querySelectorAll('button').forEach(b => b.onclick = () => { $('ht').value = b.dataset.v; pp(); });
+      };
+      $('ht').oninput = pp;
+      $('pc').onclick = () => { $('ht').value = ''; pp(); };
+      pp();
+    }
+
+    function newHabit(eh) {
+      let c = eh ? col(eh) : PAL[habits.length % PAL.length], dw = eh && eh.dow ? [...eh.dow] : [0, 1, 2, 3, 4, 5, 6];
+      openSheet('<div class="sh"><button class="lk" id="cx">Cancel</button><button class="lk" id="sv">Save</button></div><h3 style="font-family:\'Fraunces\',serif;font-size:24px;font-weight:400;margin:4px 0 14px">' + (eh ? 'Edit habit' : 'Add new habit') + '</h3>' +
+        '<input class="in" id="hn" placeholder="e.g. Read 15 pages" maxlength="60"><div class="cols" id="cs"></div>' +
+        '<div class="eb" style="margin-top:14px">In which days of week?</div><div class="days" id="ds"></div><button class="opt" id="ev" style="text-align:center;color:var(--ac)">Every day</button>' +
+        '<div class="eb" style="margin-top:14px">Reminder time (optional)</div>' + TP);
+      const paint = () => {
+        $('cs').innerHTML = PAL.map(p => '<button class="cd' + (p === c ? ' sel' : '') + '" style="--c:' + p + '" data-c="' + p + '" aria-label="Colour"></button>').join('');
+        $('ds').innerHTML = ORD.map((x, i) => '<button class="' + (dw.includes(x) ? 'on' : '') + '" data-d="' + x + '">' + LB[i] + '</button>').join('');
+        $('cs').querySelectorAll('button').forEach(b => b.onclick = () => { c = b.dataset.c; paint(); });
+        $('ds').querySelectorAll('button').forEach(b => b.onclick = () => { const x = +b.dataset.d; dw = dw.includes(x) ? dw.filter(y => y !== x) : [...dw, x]; paint(); });
+      };
+      if (eh) { $('hn').value = eh.name; $('ht').value = eh.time || ''; }
+      presets();
+      paint();
+      $('ev').onclick = () => { dw = [0, 1, 2, 3, 4, 5, 6]; paint(); };
+      $('cx').onclick = closeSheet;
+      $('sv').onclick = () => {
+        const n = $('hn').value.trim();
+        if (!n) { toast('Give your habit a name'); return; }
+        if (!dw.length) { toast('Pick at least one day'); return; }
+        if (eh) {
+          eh.name = n; eh.color = c; eh.dow = dw; eh.time = $('ht').value || undefined;
+        } else {
+          habits.push({ id: Date.now() + Math.random(), name: n, color: c, dow: dw, days: {}, freeze: {}, time: $('ht').value || undefined });
+        }
+        save();
+        closeSheet();
+        render();
+      };
+    }
+
+    function remSheet(h) {
+      openSheet('<div class="sh"><button class="lk" id="cx">Cancel</button><button class="lk" id="sv">Save</button></div><h3 style="font-family:\'Fraunces\',serif;font-size:22px;font-weight:400">Reminder</h3><div class="note" style="margin:0 0 8px">' + esc(h.name) + ' · pick a time or choose your own</div>' + TP);
+      $('ht').value = h.time || '';
+      presets();
+      $('cx').onclick = closeSheet;
+      $('sv').onclick = () => {
+        h.time = $('ht').value || undefined;
+        save();
+        closeSheet();
+        render();
+        toast(h.time ? '⏰ Reminder set for ' + h.time : 'Reminder removed');
+      };
+    }
+
+    const FREEZE_MAX = 2;
+    function freezesUsed() {
+      const p = today().slice(0, 7);
+      let n = 0;
+      habits.forEach(h => Object.keys(h.freeze || {}).forEach(d => { if (d.startsWith(p)) n++; }));
+      return n;
+    }
+
+    function actions(h) {
+      openSheet('<h3 style="font-family:\'Fraunces\',serif;font-size:22px;font-weight:400">' + esc(h.name) + '</h3><button class="opt" id="a0">✏️ Edit habit (name, colour, days)</button><button class="opt" id="a1">❄️ Freeze today (' + (FREEZE_MAX - freezesUsed()) + ' left this month)</button><button class="opt" id="a2">⏰ ' + (h.time ? 'Change reminder (' + h.time + ')' : 'Set reminder') + '</button><button class="opt" id="a3">🗑 Delete habit</button>');
+      $('a0').onclick = () => newHabit(h);
+      $('a1').onclick = () => {
+        const t = today();
+        h.freeze = h.freeze || {};
+        if (h.freeze[t]) {
+          delete h.freeze[t];
+          toast('Freeze removed');
+        } else if (h.days[t]) {
+          toast('Already done today');
+        } else if (freezesUsed() >= FREEZE_MAX) {
+          toast('No freeze days left this month');
+          return;
+        } else {
+          h.freeze[t] = 1;
+          toast('❄️ Frozen. Your streak is safe today.');
+        }
+        save();
+        closeSheet();
+        render();
+      };
+      $('a2').onclick = () => remSheet(h);
+      $('a3').onclick = () => {
+        const a = $('a3');
+        if (!a.dataset.s) {
+          a.dataset.s = 1;
+          a.textContent = '⚠️ Tap again to delete this habit';
           return;
         }
-      }
-
-      $('sv').disabled = true;
-      $('sv').textContent = 'Saving…';
-
-      if (isTrial) {
-        userProfile.name = newName;
-        userProfile.age = newAge;
-        localStorage.setItem('habitly_trial_profile', JSON.stringify({ name: newName, age: newAge }));
-        updateProfileDisplay();
+        habits = habits.filter(x => x !== h);
+        save();
         closeSheet();
-        toast('✓ Profile updated');
-        return;
+        render();
+      };
+    }
+
+    /* Render Habit Row */
+    function rowHtml(h, off) {
+      const k = col(h), t = today(), s = streak(h), isChecked = !!h.days[t];
+      
+      let dotHistory = '';
+      for (let i = 6; i >= 0; i--) {
+        const d = ago(i);
+        const did = h.days && h.days[d];
+        dotHistory += '<span class="w-dot' + (did ? ' filled' : '') + '" style="' + (did ? '--c:' + k : '') + '"></span>';
       }
+
+      return '<div class="habit-row' + (off ? ' off' : '') + '">' +
+        '<div class="habit-left">' +
+          '<button class="check-btn' + (isChecked ? ' on' : '') + '" style="--c:' + k + '" aria-label="Toggle habit completion">' +
+            (isChecked ? '<span class="material-symbols-outlined" style="font-size:16px;font-weight:700">check</span>' : '') +
+          '</button>' +
+          '<div class="habit-info mid">' +
+            '<div class="habit-title' + (isChecked ? ' dn' : '') + '">' + esc(h.name) + '</div>' +
+            '<div class="habit-meta">' + dlabel(h) + (h.time ? ' · ' + h.time : '') + ((h.freeze && h.freeze[t]) ? ' · ❄️ frozen' : '') + '</div>' +
+          '</div>' +
+        '</div>' +
+        (off ? '' :
+          '<div class="habit-right">' +
+            '<div class="week-dots">' + dotHistory + '</div>' +
+            '<div class="streak-badge' + (s ? '' : ' z') + '">' +
+              '<span class="material-symbols-outlined streak-flame">local_fire_department</span>' +
+              '<span>' + s + '</span>' +
+            '</div>' +
+          '</div>'
+        ) +
+      '</div>';
+    }
+
+    function bindRows(box, list, off) {
+      [...box.children].forEach((el, i) => {
+        if (!list[i]) return;
+        const h = list[i];
+        el.querySelector('.mid').onclick = () => actions(h);
+        el.querySelector('.check-btn').onclick = e => {
+          e.stopPropagation();
+          if (off) return;
+          tog(h, today());
+        };
+      });
+    }
+
+    const xp = () => habits.reduce((a, h) => a + Object.keys(h.days).length * 10, 0) + Object.keys(mood).length * 5;
+    const stage = s => s >= 30 ? '🌸' : s >= 14 ? '🌳' : s >= 7 ? '🪴' : s >= 3 ? '🌿' : '🌱';
+    
+    // Fully displayed labels for reflective states
+    const MOOD_DATA = [
+      { icon: 'sentiment_very_dissatisfied', label: 'Low', val: 1 },
+      { icon: 'sentiment_dissatisfied', label: 'Down', val: 2 },
+      { icon: 'sentiment_neutral', label: 'Steady', val: 3 },
+      { icon: 'sentiment_satisfied', label: 'Good', val: 4 },
+      { icon: 'sentiment_very_satisfied', label: 'Radiant', val: 5 }
+    ];
+    const ENG_DATA = [
+      { icon: 'bedtime', label: 'Sleepy', val: 1 },
+      { icon: 'battery_1_bar', label: 'Low', val: 2 },
+      { icon: 'battery_3_bar', label: 'Steady', val: 3 },
+      { icon: 'bolt', label: 'Energized', val: 4 },
+      { icon: 'local_fire_department', label: 'Peak', val: 5 }
+    ];
+
+    function pickMood(id, arr, field) {
+      const b = $(id);
+      b.innerHTML = '';
+      const cur = (mood[today()] || {})[field];
+      arr.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'mood-btn' + (cur === item.val ? ' sel' : '');
+        btn.innerHTML = '<span class="material-symbols-outlined">' + item.icon + '</span><span class="mood-label">' + item.label + '</span>';
+        btn.onclick = () => {
+          mood[today()] = Object.assign({}, mood[today()], { [field]: item.val });
+          save();
+          render();
+        };
+        b.appendChild(btn);
+      });
+    }
+
+    function render() {
+      const n = new Date(), t = today();
+      $('dow').textContent = n.toLocaleDateString(undefined, { weekday: 'long' });
+      $('date').innerHTML = n.toLocaleDateString(undefined, { month: 'long' }) + ' <i>' + n.getDate() + '</i>';
+
+      const on = habits.filter(h => sched(h, t));
+      const off = habits.filter(h => !sched(h, t));
+      const dn = on.filter(h => h.days[t]).length;
+      const pc = on.length ? Math.round(dn / on.length * 100) : 0;
+
+      $('ptxt').textContent = dn + ' of ' + on.length + ' today';
+      $('ppct').textContent = pc + ' %';
+      $('pbar').style.width = pc + '%';
+      $('n1').textContent = on.length;
+      $('n2').textContent = off.length;
+
+      $('list1').innerHTML = on.length ? on.map(h => rowHtml(h, 0)).join('') : '<div style="color:var(--mu);text-align:center;padding:24px">' + (habits.length ? 'Nothing scheduled today 🌿' : 'Tap + to add your first habit 🌱') + '</div>';
+      if (on.length) bindRows($('list1'), on, 0);
+
+      $('offw').style.display = off.length ? 'block' : 'none';
+      $('list2').innerHTML = off.map(h => rowHtml(h, 1)).join('');
+      bindRows($('list2'), off, 1);
+
+      pickMood('moodB', MOOD_DATA, 'm');
+      pickMood('enB', ENG_DATA, 'e');
+
+      /* Stats Section */
+      const x = xp();
+      const currentLevel = Math.floor(x / 100) + 1;
+      $('lvl').textContent = 'Level ' + currentLevel + ' Practitioner';
+      if ($('statTotalHabits')) $('statTotalHabits').textContent = habits.length;
+      if ($('statActiveSub')) $('statActiveSub').textContent = on.length + ' routines today';
+      if ($('statXpCount')) $('statXpCount').textContent = x.toLocaleString();
+      if ($('headerXpVal')) $('headerXpVal').textContent = x + ' XP';
+      if ($('valHabitCount')) $('valHabitCount').textContent = habits.length;
+      if ($('valXp')) $('valXp').textContent = x + ' XP';
+
+      // Best streak calculation
+      let bestS = 0, bestHabitName = '—';
+      habits.forEach(h => {
+        const s = streak(h);
+        if (s > bestS) { bestS = s; bestHabitName = h.name; }
+      });
+      if ($('statBestStreak')) $('statBestStreak').innerHTML = bestS + ' <span style="font-size:13px;color:var(--mu);font-weight:400">days</span>';
+      if ($('statBestName')) $('statBestName').textContent = bestHabitName;
+
+      // Consistency: Average of last 7 days completion rate
+      let pastSum = 0, pastDaysWithHabits = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = ago(i);
+        const sc = habits.filter(h => sched(h, d));
+        if (sc.length) {
+          pastDaysWithHabits++;
+          pastSum += (sc.filter(h => h.days[d]).length / sc.length);
+        }
+      }
+      const consistencyPct = pastDaysWithHabits ? Math.round((pastSum / pastDaysWithHabits) * 100) : (pc || 0);
+      if ($('statConsistency')) $('statConsistency').textContent = consistencyPct + '%';
+
+      // Weekly Performance Bar Chart (Mon..Sun)
+      const weekChart = $('weekChart');
+      if (weekChart) {
+        weekChart.innerHTML = '';
+        const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const dayIndices = [1, 2, 3, 4, 5, 6, 0];
+        const currentDayIndex = n.getDay();
+
+        dayIndices.forEach((dowNum, idx) => {
+          const diff = (currentDayIndex - dowNum + 7) % 7;
+          const dateStr = ago(diff);
+          const sc = habits.filter(h => sched(h, dateStr));
+          const comp = sc.length ? Math.round((sc.filter(h => h.days[dateStr]).length / sc.length) * 100) : 0;
+          const isToday = (dateStr === t);
+
+          const colEl = document.createElement('div');
+          colEl.className = 'chart-col' + (isToday ? ' is-today' : '');
+          colEl.innerHTML = (isToday ? '<span class="today-tag">Today</span>' : '') +
+            '<span class="chart-pct">' + comp + '%</span>' +
+            '<div class="chart-bar-wrap">' +
+              '<div class="chart-bar" style="height:' + Math.max(8, comp) + '%"></div>' +
+            '</div>' +
+            '<span class="chart-day">' + dayNames[idx] + '</span>';
+          weekChart.appendChild(colEl);
+        });
+      }
+
+      // Habit Breakdown Progress Bars
+      const breakdownEl = $('habitBreakdownList');
+      if (breakdownEl) {
+        if (!habits.length) {
+          breakdownEl.innerHTML = '<div style="color:var(--mu);text-align:center;padding:12px;font-size:13px">No habits created yet.</div>';
+        } else {
+          breakdownEl.innerHTML = habits.map(h => {
+            const [doneWk, totalWk] = wk(h);
+            const rate = totalWk ? Math.round((doneWk / totalWk) * 100) : 0;
+            const habitColor = col(h);
+            return '<div class="breakdown-row">' +
+              '<div class="breakdown-meta">' +
+                '<div class="breakdown-title">' +
+                  '<span class="breakdown-dot" style="background:' + habitColor + '"></span>' +
+                  '<span>' + esc(h.name) + '</span>' +
+                '</div>' +
+                '<span style="font-size:12px;font-weight:600;color:var(--tx)">' + rate + '%</span>' +
+              '</div>' +
+              '<div class="breakdown-track">' +
+                '<div class="breakdown-fill" style="width:' + rate + '%;background:' + habitColor + '"></div>' +
+              '</div>' +
+            '</div>';
+          }).join('');
+        }
+      }
+
+      // Garden Botanical Growth
+      const G = $('garden');
+      G.innerHTML = '';
+      habits.forEach(h => {
+        const s = document.createElement('span');
+        s.textContent = stage(streak(h));
+        s.title = h.name + ' · ' + streak(h) + ' day streak';
+        G.appendChild(s);
+      });
+
+      // 17-Week Cadence Matrix (Activity Heatmap)
+      const dw = (n.getDay() + 6) % 7, H = $('heat');
+      H.innerHTML = '';
+      for (let k = 0; k < 119; k++) {
+        const o = dw + 112 - k, c = document.createElement('div');
+        c.className = 'hc';
+        if (o < 0) {
+          c.style.visibility = 'hidden';
+        } else {
+          const d = ago(o), sc = habits.filter(h => sched(h, d)), f = sc.length ? sc.filter(h => h.days[d]).length / sc.length : 0;
+          if (f > 0) {
+            c.style.background = f >= 0.85 ? 'var(--ac)' : (f >= 0.5 ? 'rgba(200,85,61,0.65)' : 'rgba(200,85,61,0.3)');
+          }
+        }
+        H.appendChild(c);
+      }
+
+      // Mood Trend: Fully displayed labels (No sliced letters!)
+      const cnt = [0, 0, 0, 0, 0];
+      const mx = Object.keys(mood).filter(d => mood[d].m);
+      mx.forEach(d => cnt[mood[d].m - 1]++);
+      const mVal = Math.max(1, ...cnt);
+      $('mbars').innerHTML = cnt.map((v, i) =>
+        '<div style="display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px">' +
+          '<span style="width:64px;font-weight:500;color:var(--tx);font-size:12.5px">' + MOOD_DATA[i].label + '</span>' +
+          '<div style="flex:1;height:8px;background:var(--bd);border-radius:9999px;overflow:hidden">' +
+            '<i style="display:block;height:100%;background:var(--ac);width:' + (v / mVal * 100) + '%;border-radius:9999px"></i>' +
+          '</div>' +
+          '<span style="font-size:12px;font-weight:600;color:var(--mu);min-width:20px;text-align:right">' + v + '</span>' +
+        '</div>'
+      ).join('');
+
+      let txt;
+      const daysWithMood = mx.filter(() => habits.length);
+      if (daysWithMood.length < 5) {
+        txt = '“Log your reflective mood on 5+ days to unlock mindful insights (' + daysWithMood.length + '/5 logged).”';
+      } else {
+        const rt = d => { const sc = habits.filter(h => sched(h, d)); return sc.length ? sc.filter(h => h.days[d]).length / sc.length : 0; };
+        const av = a => a.reduce((s, d) => s + rt(d), 0) / a.length;
+        const hi = daysWithMood.filter(d => mood[d].m >= 4);
+        const lo = daysWithMood.filter(d => mood[d].m <= 3);
+        txt = (hi.length && lo.length)
+          ? '“On radiant days (Good to Radiant) you complete ' + Math.round(av(hi) * 100) + '% of routines, compared to ' + Math.round(av(lo) * 100) + '% on quieter reflective days.”'
+          : '“Paced consistency observed throughout this cycle. Your daily discipline is settling into an automatic rhythm.”';
+      }
+      $('insight').textContent = txt;
+
+      /* Calendar Section */
+      const b = new Date(n.getFullYear(), n.getMonth() + mo, 1);
+      const first = (b.getDay() + 6) % 7;
+      const dim = new Date(b.getFullYear(), b.getMonth() + 1, 0).getDate();
+      $('mt').textContent = b.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+      let ch = LB.map(l => '<div class="w">' + l + '</div>').join('') + '<div></div>'.repeat(first);
+      for (let d = 1; d <= dim; d++) {
+        const k = key(new Date(b.getFullYear(), b.getMonth(), d, 12));
+        const dots = habits.filter(h => h.days[k]).slice(0, 4).map(h => '<i style="background:' + col(h) + '"></i>').join('');
+        ch += '<div class="cl' + (k === sel ? ' sel' : '') + (k === t ? ' td' : '') + '" data-k="' + k + '">' + d + '<div class="dts">' + dots + '</div></div>';
+      }
+      $('cal').innerHTML = ch;
+      $('cal').querySelectorAll('.cl').forEach(e => e.onclick = () => { sel = e.dataset.k; render(); });
+
+      $('seld').textContent = new Date(sel + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' }) + ' · Tap habit to toggle';
+      const sl = habits.filter(h => sched(h, sel));
+      $('dlist').innerHTML = sl.length ? sl.map(h =>
+        '<div class="habit-row">' +
+          '<div class="habit-left">' +
+            '<button class="check-btn' + (h.days[sel] ? ' on' : '') + '" style="--c:' + col(h) + '">' +
+              (h.days[sel] ? '<span class="material-symbols-outlined" style="font-size:16px;font-weight:700">check</span>' : '') +
+            '</button>' +
+            '<div class="habit-info mid">' +
+              '<div class="habit-title' + (h.days[sel] ? ' dn' : '') + '">' + esc(h.name) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<button class="lk" data-e="1" aria-label="Edit habit" style="padding:4px 8px">✏️</button>' +
+        '</div>'
+      ).join('') : '<div style="color:var(--mu);text-align:center;padding:22px">No habits scheduled for this day</div>';
+
+      [...$('dlist').children].forEach((el, i) => {
+        const h = sl[i];
+        if (!h) return;
+        el.querySelector('[data-e]').onclick = e => { e.stopPropagation(); actions(h); };
+        el.style.cursor = 'pointer';
+        el.onclick = () => {
+          if (sel > t) { toast('You can’t check in for a future day yet'); return; }
+          tog(h, sel);
+        };
+      });
+    }
+
+    /* Month Navigation */
+    $('pm').onclick = () => { mo--; render(); };
+    $('nm2').onclick = () => { mo++; render(); };
+
+    /* Add Habit Buttons */
+    $('fab').onclick = () => newHabit();
+    $('add2').onclick = () => newHabit();
+    $('add3').onclick = () => newHabit();
+
+    /* Navigation Dock Setup */
+    const DOCK_ITEMS = [
+      { name: 'Today', icon: 'today' },
+      { name: 'Stats', icon: 'equalizer' },
+      { name: 'Calendar', icon: 'calendar_month' },
+      { name: 'Coach', icon: 'psychology' },
+      { name: 'Profile', icon: 'account_circle' }
+    ];
+    const navEl = $('nav');
+    navEl.innerHTML = '';
+    DOCK_ITEMS.forEach((item, i) => {
+      const b = document.createElement('button');
+      b.className = 'dock-btn' + (i === 0 ? ' on' : '');
+      b.type = 'button';
+      b.innerHTML = '<span class="material-symbols-outlined">' + item.icon + '</span><span class="label">' + item.name + '</span>';
+      b.onclick = () => {
+        tab = i;
+        document.querySelectorAll('.v').forEach((v, j) => v.classList.toggle('show', j === i));
+        [...navEl.children].forEach((x, j) => x.classList.toggle('on', j === i));
+        $('fab').style.display = i === 0 ? 'flex' : 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+      navEl.appendChild(b);
+    });
+
+    $('profAvatarTop').onclick = () => {
+      navEl.children[4].click();
+    };
+
+    /* In-browser reminders */
+    const fired = {};
+    setInterval(() => {
+      const n = new Date(), hm = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
+      habits.forEach(h => {
+        const k = h.id + today();
+        if (h.time === hm && sched(h, today()) && !h.days[today()] && !fired[k]) {
+          fired[k] = 1;
+          toast('⏰ Time for: ' + h.name);
+          try {
+            if (window.Notification && Notification.permission === 'granted') new Notification('Habitly', { body: h.name });
+          } catch (e) {}
+        }
+      });
+    }, 20000);
+
+    $('notif').onclick = async () => {
+      try {
+        const p = await Notification.requestPermission();
+        toast(p === 'granted' ? 'Notifications on while this page is open' : 'Blocked. In-page reminders still work.');
+      } catch (e) {
+        toast('Browser notifications aren’t available here. In-page reminders still work.');
+      }
+    };
+
+    /* AI Habit Coach with silent multi-model failover */
+    let history = [];
+    if ($('clearChatBtn')) {
+      $('clearChatBtn').onclick = () => {
+        history = [];
+        $('chat').innerHTML = '';
+        toast('Chat reset');
+      };
+    }
+
+    async function sample(input, opts = {}) {
+      const messages = typeof input === 'string' ? [{ role: 'user', content: input }] : input;
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages })
+      });
+      if (res.status === 401) { location.href = '/login.html'; throw new Error('auth'); }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || ('ai ' + res.status));
+      const text = data.text || '';
+      if (opts.onText) opts.onText({ text });
+      return { text };
+    }
+
+    sample.json = async prompt => {
+      const { text } = await sample(prompt);
+      const m = text.match(/\[[\s\d,]*\]/);
+      if (m) { try { return JSON.parse(m[0]); } catch (e) {} }
+      try {
+        const v = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
+        return Object.values(v).find(Array.isArray) || [];
+      } catch (e) { return []; }
+    };
+
+    $('aiNote').textContent = 'The coach runs through your private server.';
+    const summary = () => JSON.stringify({
+      today: today(),
+      recentMood: Object.entries(mood).slice(-7),
+      habits: habits.map(h => ({
+        name: h.name,
+        schedule: dlabel(h),
+        streak: streak(h),
+        doneLast7: wk(h)[0],
+        of: wk(h)[1],
+        doneToday: !!h.days[today()],
+        last14: Array.from({ length: 14 }, (_, i) => h.days[ago(13 - i)] ? 1 : 0).join('')
+      }))
+    });
+
+    function say(t, c) {
+      const m = document.createElement('div');
+      m.className = 'msg ' + c;
+      m.textContent = t;
+      $('chat').appendChild(m);
+      $('chat').scrollTop = 1e9;
+      return m;
+    }
+
+    async function ask(p, u) {
+      if (u) say(u, 'me');
+      const m = say('Reflecting…', 'ai');
+      const ctx = 'You are a warm, concise habit coach (max 120 words, no markdown). Be specific, kind, practical; suggest tiny steps. User data: ' + summary() + '\n';
+      try {
+        const r = await sample([...history, { role: 'user', content: ctx + p }], { cache: false, onText: ({ text }) => { m.textContent = text; } });
+        m.textContent = r.text;
+        history.push({ role: 'user', content: p }, { role: 'assistant', content: r.text });
+        history = history.slice(-8);
+      } catch (e) {
+        m.textContent = e.message && !e.message.startsWith('ai ') ? e.message : 'The coach is temporarily busy. Please try again in a bit.';
+      }
+    }
+
+    $('send').onclick = () => {
+      const v = $('q').value.trim();
+      if (!v) return;
+      $('q').value = '';
+      ask(v, v);
+    };
+    $('q').onkeydown = e => { if (e.key === 'Enter') $('send').click(); };
+    $('review').onclick = () => ask('Write my weekly review: one win, one struggle, one suggestion for next week.', 'Weekly review please');
+    $('suggest').onclick = () => ask('Suggest one new tiny habit with a habit-stacking cue (“after I…, I will…”).', 'Suggest a habit');
+
+    $('nlBtn').onclick = async () => {
+      const v = $('nl').value.trim();
+      if (!v || !habits.length) return;
+      $('nlBtn').disabled = true;
+      try {
+        const ids = await sample.json('Habits: ' + JSON.stringify(habits.map((h, i) => ({ i, name: h.name }))) + '\nThe user said: "' + v + '"\nReturn ONLY a JSON array of habit indexes (numbers) the user says they completed.');
+        const hit = (Array.isArray(ids) ? ids : []).filter(i => habits[i]);
+        hit.forEach(i => habits[i].days[today()] = 1);
+        save();
+        render();
+        say(hit.length ? 'Logged: ' + hit.map(i => habits[i].name).join(', ') + ' ✓' : 'I couldn’t match that to your habits.', 'ai');
+        $('nl').value = '';
+      } catch (e) {
+        say('Couldn’t log that right now. Please try again in a moment.', 'ai');
+      }
+      $('nlBtn').disabled = false;
+    };
+    $('nl').onkeydown = e => { if (e.key === 'Enter') $('nlBtn').click(); };
+
+    /* Account Profile & Data Handling */
+    (async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isTrial = urlParams.get('trial') === '1' || sessionStorage.getItem('habitly_trial_mode') === 'true';
+
+      let userProfile = { name: '', age: undefined, email: '' };
+
+      const updateProfileDisplay = () => {
+        const name = userProfile.name || '';
+        const age = userProfile.age;
+        const email = userProfile.email || '';
+        const initial = (name && name.trim()) ? name.trim()[0].toUpperCase() : (email && email.includes('@') ? email[0].toUpperCase() : '🌱');
+        if ($('profAvatar')) $('profAvatar').textContent = initial;
+        if ($('profAvatarTop')) $('profAvatarTop').textContent = initial;
+        if ($('profDisplayName')) $('profDisplayName').textContent = name || (email && email.includes('@') ? email.split('@')[0] : 'Guest Explorer');
+        if ($('valName')) $('valName').textContent = name || '— (Not set)';
+        if ($('valAge')) $('valAge').textContent = (age !== undefined && age !== null && age !== '') ? `${age} years old` : '— (Not set)';
+        if ($('valEmail')) $('valEmail').textContent = email || '—';
+        if (email && email.includes('@')) {
+          const disp = name ? `${name} (${email})` : email;
+          setSync('☁️ Signed in as ' + disp + ' · synced');
+        }
+      };
+
+      const openEditProfileModal = () => {
+        openSheet(`
+          <div class="sh">
+            <button class="lk" id="cx">Cancel</button>
+            <button class="lk" id="sv">Save</button>
+          </div>
+          <h3 style="font-family:'Fraunces',serif;font-size:22px;font-weight:400;margin:4px 0 14px">Edit Profile</h3>
+          <div class="note" style="margin:0 0 14px">Update your name and age anytime.</div>
+
+          <div class="eb" style="margin-bottom:6px">Full Name</div>
+          <input class="in" id="editName" placeholder="e.g. Alex Rivera" maxlength="80" value="${esc(userProfile.name || '')}">
+
+          <div class="eb" style="margin:14px 0 6px">Age <span style="font-weight:400;color:var(--mu);font-size:11.5px">(Optional, 1–120)</span></div>
+          <input class="in" id="editAge" type="number" inputmode="numeric" min="1" max="120" placeholder="e.g. 24" value="${(userProfile.age !== undefined && userProfile.age !== null) ? userProfile.age : ''}">
+        `);
+
+        $('cx').onclick = closeSheet;
+        $('sv').onclick = async () => {
+          const newName = $('editName').value.trim();
+          const rawAge = $('editAge').value.trim();
+          let newAge = undefined;
+          if (rawAge !== '') {
+            newAge = Number(rawAge);
+            if (isNaN(newAge) || newAge < 1 || newAge > 120) {
+              toast('Please enter a valid age between 1 and 120');
+              return;
+            }
+          }
+
+          $('sv').disabled = true;
+          $('sv').textContent = 'Saving…';
+
+          if (isTrial) {
+            userProfile.name = newName;
+            userProfile.age = newAge;
+            localStorage.setItem('habitly_trial_profile', JSON.stringify({ name: newName, age: newAge }));
+            updateProfileDisplay();
+            closeSheet();
+            toast('✓ Profile updated');
+            return;
+          }
+
+          try {
+            const res = await fetch('/api/me', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: newName, age: newAge })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Failed to update profile');
+            userProfile.name = data.name;
+            userProfile.age = data.age;
+            updateProfileDisplay();
+            closeSheet();
+            toast('✓ Profile updated successfully');
+          } catch (err) {
+            toast(err.message || 'Could not update profile');
+            $('sv').disabled = false;
+            $('sv').textContent = 'Save';
+          }
+        };
+      };
+
+      if ($('editProfileBtn')) $('editProfileBtn').onclick = openEditProfileModal;
+
+      const reveal = () => {
+        document.querySelector('.app').classList.add('ready');
+        document.body.classList.add('ready');
+        const b = $('bootScreen');
+        if (b) {
+          b.style.opacity = '0';
+          setTimeout(() => b.remove(), 260);
+        }
+      };
 
       try {
-        const res = await fetch('/api/me', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: newName, age: newAge })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to update profile');
-        userProfile.name = data.name;
-        userProfile.age = data.age;
-        updateProfileDisplay();
-        closeSheet();
-        toast('✓ Profile updated successfully');
-      } catch (err) {
-        toast(err.message || 'Could not update profile');
-        $('sv').disabled = false;
-        $('sv').textContent = 'Save';
-      }
-    };
-  };
-
-  if ($('editProfileBtn')) $('editProfileBtn').onclick = openEditProfileModal;
-
-  const reveal = () => {
-    document.querySelector('.app').classList.add('ready');
-    document.body.classList.add('ready');
-    const b = $('bootScreen');
-    if (b) {
-      b.style.opacity = '0';
-      setTimeout(() => b.remove(), 260);
-    }
-  };
-
-  try {
-    const me = await fetch('/api/me');
-    if (me.status === 401) {
-      if (!isTrial) {
-        window.location.replace('/login.html');
-        return;
-      }
-      // Guest / Trial Mode without an account
-      sessionStorage.setItem('habitly_trial_mode', 'true');
-      const savedTrial = localStorage.getItem('habitly_trial_state');
-      if (savedTrial) {
-        try {
-          const parsed = JSON.parse(savedTrial);
-          habits = parsed.habits || [];
-          mood = parsed.mood || {};
-        } catch (err) {}
-      }
-      if (!habits.length) {
-        habits = [
-          { id: 1, name: '💧 Drink 2L water', color: '#6fa8d6', dow: [0,1,2,3,4,5,6], days: {}, freeze: {} },
-          { id: 2, name: '📖 Read 15 pages', color: '#c8553d', dow: [0,1,2,3,4,5,6], days: {}, freeze: {} },
-          { id: 3, name: '🧘 10 min mindfulness', color: '#7aa57a', dow: [1,2,3,4,5], days: {}, freeze: {} }
-        ];
-      }
-      ref = {
-        set: async st => {
-          localStorage.setItem('habitly_trial_state', JSON.stringify(st));
-          setSync('✨ Trial Mode · Saved in this browser');
-        }
-      };
-      setSync('✨ Trial Mode · Saved in this browser · [Create free account to sync ☁️]');
-      const tb = $('trialBanner');
-      if (tb) tb.style.display = 'flex';
-
-      let savedProf = {};
-      try { savedProf = JSON.parse(localStorage.getItem('habitly_trial_profile') || '{}'); } catch (e) {}
-      userProfile = {
-        name: savedProf.name || 'Guest User',
-        age: savedProf.age,
-        email: 'None (Guest Mode)'
-      };
-      if ($('profBadge')) {
-        $('profBadge').textContent = 'Guest Trial · Local';
-        $('profBadge').style.background = 'var(--soft)';
-        $('profBadge').style.color = 'var(--mu)';
-      }
-      updateProfileDisplay();
-
-      if ($('logout')) {
-        $('logout').textContent = '✨ Sign In or Create Account';
-        $('logout').onclick = () => { location.href = '/login.html'; };
-      }
-      if ($('switchAccBtn')) $('switchAccBtn').style.display = 'none';
-      if ($('emailReminderRow')) $('emailReminderRow').style.display = 'none';
-      if ($('sendReminderNowWrap')) $('sendReminderNowWrap').style.display = 'none';
-
-      render();
-      reveal();
-      return;
-    }
-
-    // Authenticated user
-    sessionStorage.removeItem('habitly_trial_mode');
-    const { email, name, age, emailReminders } = await me.json();
-    const d = await (await fetch('/api/state')).json();
-    habits = d.habits || [];
-    mood = d.mood || {};
-    ref = {
-      set: async st => {
-        const x = await fetch('/api/state', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(st) });
-        if (!x.ok) throw new Error('save');
-        return x;
-      }
-    };
-
-    userProfile = { name: name || '', age, email };
-    if ($('profBadge')) {
-      $('profBadge').textContent = 'Cloud Synced ☁️';
-      $('profBadge').style.background = 'rgba(72, 167, 104, 0.15)';
-      $('profBadge').style.color = '#2d864e';
-    }
-    updateProfileDisplay();
-
-    // Email reminders preference & test trigger
-    let emailRemEnabled = emailReminders !== false;
-    const remToggle = $('emailRemToggle');
-    const updateRemUI = () => {
-      if (remToggle) {
-        remToggle.textContent = emailRemEnabled ? 'Enabled ✓' : 'Disabled ✕';
-        remToggle.style.color = emailRemEnabled ? '#2d864e' : 'var(--mu)';
-      }
-    };
-    updateRemUI();
-
-    if (remToggle) {
-      remToggle.onclick = async () => {
-        emailRemEnabled = !emailRemEnabled;
-        updateRemUI();
-        try {
-          await fetch('/api/reminders/preferences', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ emailReminders: emailRemEnabled })
-          });
-          toast(emailRemEnabled ? '✉️ Email reminders enabled' : 'Email reminders turned off');
-        } catch (e) {
-          toast('Failed to save reminder preference');
-        }
-      };
-    }
-
-    const sendNowBtn = $('sendReminderNowBtn');
-    if (sendNowBtn) {
-      sendNowBtn.onclick = async () => {
-        sendNowBtn.disabled = true;
-        sendNowBtn.textContent = 'Sending email reminder…';
-        try {
-          const res = await fetch('/api/reminders/send-now', { method: 'POST' });
-          const j = await res.json();
-          if (res.ok) {
-            toast(`✉️ Reminder sent to ${email}! (${j.pendingCount} pending)`);
-          } else {
-            toast(j.error || 'Could not send reminder email');
+        const me = await fetch('/api/me');
+        if (me.status === 401) {
+          if (!isTrial) {
+            window.location.replace('/login.html');
+            return;
           }
-        } catch (e) {
-          toast('Network error sending reminder email');
-        } finally {
-          sendNowBtn.disabled = false;
-          sendNowBtn.innerHTML = '<span>📨</span><span>Send Me Today\'s Reminder Email Now</span>';
+          // Guest / Trial Mode without an account
+          sessionStorage.setItem('habitly_trial_mode', 'true');
+          const savedTrial = localStorage.getItem('habitly_trial_state');
+          if (savedTrial) {
+            try {
+              const parsed = JSON.parse(savedTrial);
+              habits = parsed.habits || [];
+              mood = parsed.mood || {};
+            } catch (err) {}
+          }
+          if (!habits.length) {
+            habits = [
+              { id: 1, name: '💧 Drink 2L water', color: '#6FA8D6', dow: [0, 1, 2, 3, 4, 5, 6], days: {}, freeze: {} },
+              { id: 2, name: '📖 Read 15 pages', color: '#C8553D', dow: [0, 1, 2, 3, 4, 5, 6], days: {}, freeze: {} },
+              { id: 3, name: '🧘 10 min mindfulness', color: '#7AA57A', dow: [1, 2, 3, 4, 5], days: {}, freeze: {} }
+            ];
+          }
+          ref = {
+            set: async st => {
+              localStorage.setItem('habitly_trial_state', JSON.stringify(st));
+              setSync('✨ Trial Mode · Saved in this browser');
+            }
+          };
+          setSync('✨ Trial Mode · Saved in this browser · [Create free account to sync ☁️]');
+          const tb = $('trialBanner');
+          if (tb) tb.style.display = 'flex';
+
+          let savedProf = {};
+          try { savedProf = JSON.parse(localStorage.getItem('habitly_trial_profile') || '{}'); } catch (e) {}
+          userProfile = {
+            name: savedProf.name || 'Guest User',
+            age: savedProf.age,
+            email: 'None (Guest Mode)'
+          };
+          if ($('profBadge')) {
+            $('profBadge').textContent = 'Guest Trial · Local';
+            $('profBadge').style.background = 'var(--soft)';
+            $('profBadge').style.color = 'var(--mu)';
+          }
+          updateProfileDisplay();
+
+          if ($('logout')) {
+            $('logout').textContent = '✨ Sign In or Create Account';
+            $('logout').onclick = () => { location.href = '/login.html'; };
+          }
+          if ($('switchAccBtn')) $('switchAccBtn').style.display = 'none';
+          if ($('emailReminderRow')) $('emailReminderRow').style.display = 'none';
+          if ($('sendReminderNowWrap')) $('sendReminderNowWrap').style.display = 'none';
+
+          render();
+          reveal();
+          return;
         }
-      };
-    }
 
-    if ($('logout')) {
-      $('logout').textContent = '🚪 Sign Out';
-      $('logout').onclick = async () => {
+        // Authenticated user
         sessionStorage.removeItem('habitly_trial_mode');
-        try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
-        location.href = '/login.html';
-      };
-    }
-    if ($('switchAccBtn')) {
-      $('switchAccBtn').style.display = 'block';
-      $('switchAccBtn').onclick = async () => {
-        sessionStorage.removeItem('habitly_trial_mode');
-        try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
-        location.href = '/login.html';
-      };
-    }
+        const { email, name, age, emailReminders } = await me.json();
+        const d = await (await fetch('/api/state')).json();
+        habits = d.habits || [];
+        mood = d.mood || {};
+        ref = {
+          set: async st => {
+            const x = await fetch('/api/state', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(st) });
+            if (!x.ok) throw new Error('save');
+            return x;
+          }
+        };
 
-    render();
-    reveal();
-  } catch (e) {
-    if (isTrial) {
-      render();
-      reveal();
-    } else {
-      setSync('Server unreachable. Changes are not being saved.');
-      render();
-      reveal();
-    }
-  }
-})();
-</script></body></html>
+        userProfile = { name: name || '', age, email };
+        if ($('profBadge')) {
+          $('profBadge').textContent = 'Cloud Synced ☁️';
+          $('profBadge').style.background = 'rgba(122,165,122,0.18)';
+          $('profBadge').style.color = 'var(--sage)';
+        }
+        updateProfileDisplay();
+
+        // Email reminders preference & test trigger
+        let emailRemEnabled = emailReminders !== false;
+        const remToggle = $('emailRemToggle');
+        const updateRemUI = () => {
+          if (remToggle) {
+            remToggle.textContent = emailRemEnabled ? 'Enabled ✓' : 'Disabled ✕';
+            remToggle.style.color = emailRemEnabled ? 'var(--sage)' : 'var(--mu)';
+          }
+        };
+        updateRemUI();
+
+        if (remToggle) {
+          remToggle.onclick = async () => {
+            emailRemEnabled = !emailRemEnabled;
+            updateRemUI();
+            try {
+              await fetch('/api/reminders/preferences', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ emailReminders: emailRemEnabled })
+              });
+              toast(emailRemEnabled ? '✉️ Email reminders enabled' : 'Email reminders turned off');
+            } catch (e) {
+              toast('Failed to save reminder preference');
+            }
+          };
+        }
+
+        const sendNowBtn = $('sendReminderNowBtn');
+        if (sendNowBtn) {
+          sendNowBtn.onclick = async () => {
+            sendNowBtn.disabled = true;
+            sendNowBtn.textContent = 'Sending email reminder…';
+            try {
+              const res = await fetch('/api/reminders/send-now', { method: 'POST' });
+              const j = await res.json();
+              if (res.ok) {
+                toast(`✉️ Reminder sent to ${email}! (${j.pendingCount} pending)`);
+              } else {
+                toast(j.error || 'Could not send reminder email');
+              }
+            } catch (e) {
+              toast('Network error sending reminder email');
+            } finally {
+              sendNowBtn.disabled = false;
+              sendNowBtn.innerHTML = '<span>📨</span><span>Send Me Today\'s Reminder Email Now</span>';
+            }
+          };
+        }
+
+        if ($('logout')) {
+          $('logout').textContent = '🚪 Sign Out';
+          $('logout').onclick = async () => {
+            sessionStorage.removeItem('habitly_trial_mode');
+            try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+            location.href = '/login.html';
+          };
+        }
+        if ($('switchAccBtn')) {
+          $('switchAccBtn').style.display = 'block';
+          $('switchAccBtn').onclick = async () => {
+            sessionStorage.removeItem('habitly_trial_mode');
+            try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+            location.href = '/login.html';
+          };
+        }
+
+        render();
+        reveal();
+      } catch (e) {
+        if (isTrial) {
+          render();
+          reveal();
+        } else {
+          setSync('Server unreachable. Changes are not being saved.');
+          render();
+          reveal();
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
